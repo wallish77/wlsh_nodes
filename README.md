@@ -38,7 +38,7 @@ Same as the above, but with two output ndoes to provide the positive and negativ
 ### Outpaint to Image
 Extends an image in a selected direction by a number of pixels and outputs the expanded image and a mask of the outpainted region with some blurred border padding.
 
-### Generate Second Mask
+### Generate Edge Mask
 Used to generate a 'stripe' of mask with blurred edges that overlaps an original iamge with the outpainted new space.  Use on a second pass of an image to 'redo' the masked stripe region and help smooth out the edges of an outpainted image. Pass output to a `Convert Image to Mask` node using the `green` channel.
 
 ### VAE Encode for Inpaint Padding
