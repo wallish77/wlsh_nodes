@@ -581,7 +581,7 @@ class WLSH_VAE_Encode_For_Inpaint_Padding:
 
         return ({"samples":t, "noise_mask": (mask_erosion[0][:x,:y].round())}, )
 
-class WLSH_Generate_Second_Mask:
+class WLSH_Generate_Edge_Mask:
     directions = ["left","right","up","down"]
 
     @classmethod
@@ -1017,7 +1017,7 @@ NODE_CLASS_MAPPINGS = {
     "CLIP Positive-Negative w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative,
     "Outpaint to Image (WLSH)": WLSH_Outpaint_To_Image,
     "VAE Encode for Inpaint Padding (WLSH)": WLSH_VAE_Encode_For_Inpaint_Padding,
-    "Generate Second Mask (WLSH)": WLSH_Generate_Second_Mask,
+    "Generate Edge Mask (WLSH)": WLSH_Generate_Edge_Mask,
     # "Generate Face Mask (WLSH)": WLSH_Generate_Face_Mask,
     "Image Scale By Factor (WLSH)": WLSH_Image_Scale_By_Factor,
     "Upscale by Factor with Model (WLSH)": WLSH_Upscale_By_Factor_With_Model,
