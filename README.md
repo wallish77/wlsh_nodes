@@ -26,6 +26,9 @@ Returns a formatted string of the current time in the selected format.  Useful f
 ### Empty Latent by Ratio
 Quickly generate an empty latent by selecting an aspect ratio, an orientation (landscape or portrait) and the length of the 'shorter' side
 
+### Resolutions by Ratio
+Similar to Empty Latent by Ratio, but returns integer `width` and `height` for use with other nodes.
+
 ### SDXL Quick Empty Latent
 Quickly generate an empty latent of a size from a list of ideal SDXL image sizes
 

@@ -162,9 +162,10 @@ class WLSH_Alternating_KSamplerAdvanced:
             negative = [[clip.encode(negative_txt), {}]]
 
             if(step < steps):
-                force_full_denoise = False
+                force_full_denoise = True
             if(step > 0):
-                disable_noise=True
+                # disable_noise=True
+                denoise=(steps-step)/(steps)
 
             latent_image = common_ksampler(model, noise_seed, 1, cfg, sampler_name, scheduler, positive, negative, latent_input,
              denoise=denoise, disable_noise=disable_noise, start_step=start_at_step, last_step=end_at_step, 
@@ -290,6 +291,31 @@ class WLSH_SDXL_Resolutions:
         width,height = resolution.split('x')
         width = int(width)
         height = int(height)
+        if(direction == "portrait"):
+            width,height = height,width
+        return(width,height)
+
+class WLSH_Resolutions_by_Ratio:
+    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","21:9","2:1","3:1","4:1"]
+    direction = ["landscape","portrait"]
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "aspect": (s.aspects,),
+                              "direction": (s.direction,),
+                              "shortside": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64})}}
+    RETURN_TYPES = ("INT","INT",)
+    FUNCTION = "get_resolutions"
+    CATEGORY="WLSH Nodes"
+
+    def get_resolutions(self, aspect, direction, shortside):
+        x,y = aspect.split(':')
+        x = int(x)
+        y = int(y)
+        ratio = x/y
+        width = int(shortside * ratio)
+        width = (width + 63) & (-64)
+        height = shortside
         if(direction == "portrait"):
             width,height = height,width
         return(width,height)
@@ -1005,10 +1031,11 @@ class WLSH_Save_Positive_Prompt_File:
 NODE_CLASS_MAPPINGS = {
     "Checkpoint Loader w/Name (WLSH)": WLSH_Checkpoint_Loader_Model_Name,
     "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvancedMod,
-    # "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
+    "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
     "Seed to Number (WLSH)": WLSH_Seed_to_Number,
     "SDXL Steps (WLSH)": WLSH_SDXL_Steps,
     "SDXL Resolutions (WLSH)": WLSH_SDXL_Resolutions,
+    "Resolutions by Ratio (WLSH)": WLSH_Resolutions_by_Ratio,
     "Multiply Integer (WLSH)": WLSH_Int_Multiply,
     "Time String (WLSH)": WLSH_Time_String,
     "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,
