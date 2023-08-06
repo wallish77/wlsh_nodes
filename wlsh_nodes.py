@@ -13,8 +13,8 @@ from PIL import Image, ImageOps, ImageFilter, ImageDraw
 from PIL.PngImagePlugin import PngInfo
 import numpy as np
 from torchvision.transforms import ToPILImage
-import cv2
-from deepface import DeepFace
+#import cv2
+#from deepface import DeepFace
 
 import re
 import latent_preview
@@ -650,44 +650,44 @@ class WLSH_Generate_Edge_Mask:
         mask2 = torch.from_numpy(mask2)[None,]
         return (mask2,)
 
-class WLSH_Generate_Face_Mask:
-    detectors = ["opencv", "retinaface", "ssd", "mtcnn"]
-    channels = ["red", "blue", "green"]
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": { "image": ("IMAGE",),
-                             "detector": (s.detectors,),
-                             "channel": (s.channels,),
-                             "mask_padding": ("INT",{"default": 6, "min": 0, "max": 32, "step": 2}) 
-                              }}
-    RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "gen_face_mask"
+# class WLSH_Generate_Face_Mask:
+#     detectors = ["opencv", "retinaface", "ssd", "mtcnn"]
+#     channels = ["red", "blue", "green"]
+#     @classmethod
+#     def INPUT_TYPES(s):
+#         return {"required": { "image": ("IMAGE",),
+#                              "detector": (s.detectors,),
+#                              "channel": (s.channels,),
+#                              "mask_padding": ("INT",{"default": 6, "min": 0, "max": 32, "step": 2}) 
+#                               }}
+#     RETURN_TYPES = ("IMAGE",)
+#     FUNCTION = "gen_face_mask"
 
-    CATEGORY = "WLSH Nodes/inpainting"
-    def gen_face_mask(self, image, mask_padding, detector, channel):
-        image = tensor2pil(image)
+#     CATEGORY = "WLSH Nodes/inpainting"
+#     def gen_face_mask(self, image, mask_padding, detector, channel):
+#         image = tensor2pil(image)
         
-        faces = DeepFace.extract_faces(np.array(image),detector_backend=detector)
-        # cv_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        # # Convert to grayscale
-        # gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+#         faces = DeepFace.extract_faces(np.array(image),detector_backend=detector)
+#         # cv_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+#         # # Convert to grayscale
+#         # gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
 
-        # # Detect faces in the image
-        # face_cascade = cv2.CascadeClassifier('custom_nodes/haarcascade_frontalface_default.xml')
-        # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-        mask = Image.new('RGB',image.size)
+#         # # Detect faces in the image
+#         # face_cascade = cv2.CascadeClassifier('custom_nodes/haarcascade_frontalface_default.xml')
+#         # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+#         mask = Image.new('RGB',image.size)
 
-        # Draw a rectangle on the PIL Image object
-        colors = {"red": "RGB(255,0,0)", "green": "RGB(0,255,0)", "blue": "RGB(0,0,255)"}
-        draw = ImageDraw.Draw(mask)
-        for face in faces:
-            x,y,w,h = face['facial_area'].values()
-            draw.rectangle((x-mask_padding,y-mask_padding,x+w+mask_padding,y+h+mask_padding), outline=colors[channel], fill=colors[channel])
-        mask = mask.filter(ImageFilter.GaussianBlur(radius=6))
+#         # Draw a rectangle on the PIL Image object
+#         colors = {"red": "RGB(255,0,0)", "green": "RGB(0,255,0)", "blue": "RGB(0,0,255)"}
+#         draw = ImageDraw.Draw(mask)
+#         for face in faces:
+#             x,y,w,h = face['facial_area'].values()
+#             draw.rectangle((x-mask_padding,y-mask_padding,x+w+mask_padding,y+h+mask_padding), outline=colors[channel], fill=colors[channel])
+#         mask = mask.filter(ImageFilter.GaussianBlur(radius=6))
 
-        mask = np.array(mask).astype(np.float32) / 255.0
-        mask = torch.from_numpy(mask)[None,]
-        return (mask,)
+#         mask = np.array(mask).astype(np.float32) / 255.0
+#         mask = torch.from_numpy(mask)[None,]
+#         return (mask,)
 
 # image I/O
 class WLSH_Image_Save_With_Prompt_Info:
