@@ -193,10 +193,31 @@ class WLSH_Seed_to_Number:
     RETURN_TYPES = ("INT",)
     FUNCTION = "number_to_seed"
 
-    CATEGORY = "WLSH Nodes"
+    CATEGORY = "WLSH Nodes/number"
 
     def number_to_seed(self, seed):
         return (int(seed["seed"]), )
+
+class WLSH_Seed_and_Int:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "seed": ("INT", {"default": 0, "min": 0,
+                          "max": 0xffffffffffffffff})
+            }
+        }
+
+    RETURN_TYPES = ("INT","SEED",)
+    FUNCTION = "seed_and_int"
+
+    CATEGORY = "WLSH Nodes/number"
+
+    def seed_and_int(self, seed):
+        return (seed,{"seed": seed} )
 
 class WLSH_SDXL_Steps:
     def __init__(self):
@@ -1033,6 +1054,7 @@ NODE_CLASS_MAPPINGS = {
     "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvancedMod,
     "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
     "Seed to Number (WLSH)": WLSH_Seed_to_Number,
+    "Seed and Int (WLSH)": WLSH_Seed_and_Int,
     "SDXL Steps (WLSH)": WLSH_SDXL_Steps,
     "SDXL Resolutions (WLSH)": WLSH_SDXL_Resolutions,
     "Resolutions by Ratio (WLSH)": WLSH_Resolutions_by_Ratio,
