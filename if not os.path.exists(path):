@@ -816,7 +816,7 @@ class WLSH_Image_Save_With_Prompt_Info:
 
 class WLSH_Image_Save_With_Prompt_File:
     def __init__(self):
-        self.output_dir = os.path.join(os.getcwd()+'/ComfyUI', "output")
+        self.output_dir = os.path.join(os.getcwd()+'\ComfyUI', "output")
 
     @classmethod
     def INPUT_TYPES(s):
@@ -877,7 +877,7 @@ class WLSH_Image_Save_With_Prompt_File:
             return (digits, prefix)
         
         # Setup custom path or default
-        if output_path.strip() != '':
+        if output_path.strip() == '':  
             if not os.path.exists(output_path.strip()):
                 print(f'\033[34mWAS NS\033[0m Error: The path `{output_path.strip()}` specified doesn\'t exist! Defaulting to `{self.output_dir}` directory.')
             else:
@@ -915,7 +915,7 @@ class WLSH_Image_Save_With_Prompt_File:
         return(paths)
 
     def save_text_file(self, positive, negative, seed, modelname, path, filename):
-        
+        path = self.output_dir 
         # Ensure path exists
         if not os.path.exists(path):
             print(f'\033[34mWAS NS\033[0m Error: The path `{path}` doesn\'t exist!')
