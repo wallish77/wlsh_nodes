@@ -11,6 +11,9 @@ Modified version of the advanced KSampler to return the `denoising` option for e
 ### Seed to Number
 Converts a `SEED` type to an `INT`, which was needed for some third party nodes
 
+### Seed and Int
+Generates a seed and outputs as an `INT` and `SEED` type to allow the number to be used with nodes looking for varying inputs
+
 ### SDXL Steps
 A single node that outputs three different integers for use as step count in SDXL workflows.
 
@@ -57,7 +60,7 @@ Does what it says on the tin.  Scales using an upscale model, but lets you defin
 Take an input image and do a quick simple scale (or scale & crop) to one of the ideal SDXL resolutions
 
 ### Image Save with Prompt Data
-Save an image with prompt information embedded as a comment or exif data similar to how Auto1111 does it.  Need to feed it various pieces of information and then specify the filename syntax for replacement if desired.  Filename ptions include `%time` for timestamp, `%model` for model name (via input node or text box), `%seed` for the seed (via input node).  Writes the above as well as positive and negative prompts (convert their widgets to inputs to connect to a prompt string box for easy automation).  As far as I can tell, does not remove the ComfyUI 'embed workflow' feature.
+Save an image with prompt information embedded as a comment or exif data similar to how Auto1111 does it.  Need to feed it various pieces of information and then specify the filename syntax for replacement if desired.  Filename ptions include `%time` for timestamp, `%model` for model name (via input node or text box), `%seed` for the seed (via input node), and `%counter` for the integer counter (via primative node with 'increment' option ideally).  Writes the above as well as positive and negative prompts (**convert their widgets to inputs to connect to a prompt string box for easy automation**).  As far as I can tell, does not remove the ComfyUI 'embed workflow' feature.
 
 ### Save Prompt Info
 As the above, but to a txt file
@@ -68,6 +71,9 @@ Combination of the above two
 ### Save Positive Prompt File
 Saves just the connected text info (expected to be the positive prompt) to help with training.  Make sure to do matching filenames!
 
+### Build Filename String
+Takes inputs similar to the Image Save node, used to build a filename which can be passed to multiple other nodes
+
 ## Disabled or Non-Functional Nodes
 
 ### Alternating KSampler
@@ -75,3 +81,9 @@ Work in progress.  Attempting to recreate the alternating prompts of Auto1111.  
 
 ### Generate Face Mask
 Use a face detection library to create a mask box on a desired color channel to then be passed to the `Convert Image to Mask` node, but currently not working.
+
+
+## Example Workflow
+Here's an example hi-res workflow using various WLSH nodes.
+
+![hi-res](./img/hires-workflow-example.png)

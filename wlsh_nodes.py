@@ -711,9 +711,43 @@ class WLSH_Generate_Edge_Mask:
 #         return (mask,)
 
 # image I/O
+def get_timestamp(time_format="%Y-%m-%d-%H%M%S"):
+    now = datetime.now()
+    try:
+        timestamp = now.strftime(time_format)
+    except:
+        timestamp = now.strftime("%Y-%m-%d-%H%M%S")
+
+    return(timestamp)
+
+def make_filename(filename="ComfyUI", seed={"seed":0}, modelname="sd", counter=0, time_format="%Y-%m-%d-%H%M%S"):
+    '''
+    Builds a filename by reading in a filename format and returning a formatted string using input tokens
+    Tokens:
+    %time - timestamp using the time_format value
+    %model - modelname using the modelname input
+    %seed - seed from the seed input
+    %counter - counter integer from the counter input
+    '''
+    timestamp = get_timestamp(time_format)
+
+    # parse input string
+
+    print("filename: ", filename)
+    filename = filename.replace("%time",timestamp)
+
+    filename = filename.replace("%model",modelname)
+    filename = filename.replace("%seed",str(seed['seed']))
+    filename = filename.replace("%counter",str(counter))  
+
+    if filename == "":
+        filename = timestamp
+    return(filename)  
+
 class WLSH_Image_Save_With_Prompt_Info:
     def __init__(self):
-        self.output_dir = os.path.join(os.getcwd()+'/ComfyUI', "output")
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
 
     @classmethod
     def INPUT_TYPES(s):
@@ -721,7 +755,7 @@ class WLSH_Image_Save_With_Prompt_Info:
                     "required": {
                         "images": ("IMAGE", ),
                         "filename": ("STRING", {"default": f'%time_%seed', "multiline": False}),
-                        "output_path": ("STRING", {"default": './output', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
                         "extension": (['png', 'jpeg', 'tiff', 'gif'], ),
                         "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
                     },
@@ -730,6 +764,8 @@ class WLSH_Image_Save_With_Prompt_Info:
                         "negative": ("STRING",{"default": '', "multiline": True}),
                         "seed": ("SEED",),
                         "modelname": ("STRING",{"default": '', "multiline": False}),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                     },
                     "hidden": {
                         "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
@@ -743,31 +779,23 @@ class WLSH_Image_Save_With_Prompt_Info:
 
     CATEGORY = "WLSH Nodes/IO"
 
-    def save_files(self, images, positive="uknown", negative="uknown", seed=0, modelname="uknown", filename=f'%time', output_path="./output",
-     extension='png', quality=100, prompt=None, extra_pnginfo=None):
-        filename = self.make_filename(seed, modelname, filename)
-        comment = self.make_comment(positive, negative, modelname, seed)
+    def save_files(self, images, positive="unknown", negative="unknown", seed={"seed": 0}, modelname="sd", counter=0, filename='', path="",
+    time_format="%Y-%m-%d-%H%M%S", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        filename = make_filename(filename, seed, modelname, counter, time_format)
+        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
+        output_path = os.path.join(self.output_dir,path)
+        
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+                
         paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
-        #return
+        
         return { "ui": { "images": paths } }
 
-    def make_comment(self, positive, negative, modelname, seed):
-        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
-        return comment
-
-    def make_filename(self, seed, modelname, filename):
-        # generate datetime string
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d-%H%M%S")
-
-        # parse input string
-        filename = filename.replace("%time",timestamp)
-
-        filename = filename.replace("%model",modelname)
-        filename = filename.replace("%seed",str(seed['seed']))
-
-        return (filename)   
-    def save_images(self, images, output_path='', filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+    def save_images(self, images, output_path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
         def map_filename(filename):
             prefix_len = len(filename_prefix)
             prefix = filename[:prefix_len + 1]
@@ -777,112 +805,6 @@ class WLSH_Image_Save_With_Prompt_Info:
                 digits = 0
             return (digits, prefix)
         
-        # Setup custom path or default
-        if output_path.strip() != '':
-            if not os.path.exists(output_path.strip()):
-                print(f'\033[34mWAS NS\033[0m Error: The path `{output_path.strip()}` specified doesn\'t exist! Defaulting to `{self.output_dir}` directory.')
-            else:
-                self.output_dir = os.path.normpath(output_path.strip())
-
-        imgCount = 1
-        paths = list()
-        for image in images:
-            i = 255. * image.cpu().numpy()
-            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
-            metadata = PngInfo() 
-            if prompt is not None:
-                metadata.add_text("prompt", json.dumps(prompt))
-            if extra_pnginfo is not None:
-                for x in extra_pnginfo:
-                    metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-            prefix = filename_prefix
-            if(images.size()[0] > 1):
-                prefix = filename_prefix + "_{:02d}".format(imgCount)
-
-            file = f"{prefix}.{extension}"
-            if extension == 'png':
-                img.save(os.path.join(self.output_dir, file), comment=comment, pnginfo=metadata, optimize=True)
-            elif extension == 'webp':
-                img.save(os.path.join(self.output_dir, file), quality=quality)
-            elif extension == 'jpeg':
-                img.save(os.path.join(self.output_dir, file), quality=quality, comment=comment, optimize=True)
-            elif extension == 'tiff':
-                img.save(os.path.join(self.output_dir, file), quality=quality, optimize=True)
-            else:
-                img.save(os.path.join(self.output_dir, file))
-            paths.append(file)
-            imgCount += 1
-        return(paths)
-
-class WLSH_Image_Save_With_Prompt_File:
-    def __init__(self):
-        self.output_dir = os.path.join(os.getcwd()+'/ComfyUI', "output")
-
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-                    "required": {
-                        "images": ("IMAGE", ),                   
-                        "filename": ("STRING", {"default": f'%time_%seed', "multiline": False}),
-                        "output_path": ("STRING", {"default": './output', "multiline": False}),
-                        "extension": (['png', 'jpeg', 'tiff', 'gif'], ),
-                        "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
-                    },
-                    "optional": {
-                        "positive": ("STRING",{"default": ' ', "multiline": True}),
-                        "negative": ("STRING",{"default": ' ', "multiline": True}),
-                        "seed": ("SEED",),
-                        "modelname": ("STRING",{"default": 'sd', "multiline": False}),
-                    },
-                    "hidden": {
-                        "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
-                    },
-                }
-
-    RETURN_TYPES = ()
-    FUNCTION = "save_files"
-
-    OUTPUT_NODE = True
-
-    CATEGORY = "WLSH Nodes/IO"
-
-    def save_files(self, images, positive="unknown", negative="unknown", seed=0, modelname="unknown", filename=f'%time', output_path="./output",
-     extension='png', quality=100, prompt=None, extra_pnginfo=None):
-        filename = self.make_filename(seed, modelname, filename)
-        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
-        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
-        self.save_text_file(positive, negative, seed, modelname, output_path, filename)
-        #return
-        return { "ui": { "images": paths } }
-
-    def make_filename(self, seed, modelname, filename):
-        # generate datetime string
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d-%H%M%S")
-
-        # parse input string
-        filename = filename.replace("%time",timestamp)
-        filename = filename.replace("%model",modelname)
-        filename = filename.replace("%seed",str(seed['seed']))
-
-        return (filename)   
-    def save_images(self, images, output_path='', filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
-        def map_filename(filename):
-            prefix_len = len(filename_prefix)
-            prefix = filename[:prefix_len + 1]
-            try:
-                digits = int(filename[prefix_len + 1:].split('_')[0])
-            except:
-                digits = 0
-            return (digits, prefix)
-        
-        # Setup custom path or default
-        if output_path.strip() != '':
-            if not os.path.exists(output_path.strip()):
-                print(f'\033[34mWAS NS\033[0m Error: The path `{output_path.strip()}` specified doesn\'t exist! Defaulting to `{self.output_dir}` directory.')
-            else:
-                self.output_dir = os.path.normpath(output_path.strip())
-
         imgCount = 1
         paths = list()
         for image in images:
@@ -901,34 +823,115 @@ class WLSH_Image_Save_With_Prompt_File:
 
             file = f"{filename_prefix}.{extension}"
             if extension == 'png':
-                img.save(os.path.join(self.output_dir, file), comment=comment, pnginfo=metadata, optimize=True)
+                img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
             elif extension == 'webp':
-                img.save(os.path.join(self.output_dir, file), quality=quality)
+                img.save(os.path.join(output_path, file), quality=quality)
             elif extension == 'jpeg':
-                img.save(os.path.join(self.output_dir, file), quality=quality, comment=comment, optimize=True)
+                img.save(os.path.join(output_path, file), quality=quality, comment=comment, optimize=True)
             elif extension == 'tiff':
-                img.save(os.path.join(self.output_dir, file), quality=quality, optimize=True)
+                img.save(os.path.join(output_path, file), quality=quality, optimize=True)
             else:
-                img.save(os.path.join(self.output_dir, file))
+                img.save(os.path.join(output_path, file))
             paths.append(file)
             imgCount += 1
         return(paths)
 
-    def save_text_file(self, positive, negative, seed, modelname, path, filename):
+class WLSH_Image_Save_With_Prompt_File:
+    def __init__(self):
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+                    "required": {
+                        "images": ("IMAGE", ),                   
+                        "filename": ("STRING", {"default": f'%time_%seed', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
+                        "extension": (['png', 'jpeg', 'tiff', 'gif'], ),
+                        "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
+                    },
+                    "optional": {
+                        "positive": ("STRING",{"default": ' ', "multiline": True}),
+                        "negative": ("STRING",{"default": ' ', "multiline": True}),
+                        "seed": ("SEED",),
+                        "modelname": ("STRING",{"default": 'sd', "multiline": False}),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                    },
+                    "hidden": {
+                        "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
+                    },
+                }
+
+    RETURN_TYPES = ()
+    FUNCTION = "save_files"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "WLSH Nodes/IO"
+
+    def save_files(self, images, positive="unknown", negative="unknown", seed={"seed": 0}, modelname="sd", counter=0, filename='', path="",
+    time_format="%Y-%m-%d-%H%M%S", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        filename = make_filename(filename, seed, modelname, counter, time_format)
+        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
+        output_path = os.path.join(self.output_dir,path)
         
-        # Ensure path exists
-        if not os.path.exists(path):
-            print(f'\033[34mWAS NS\033[0m Error: The path `{path}` doesn\'t exist!')
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+                
+        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
+        self.save_text_file(filename, output_path, positive, negative, seed, modelname)
+        #return
+        return { "ui": { "images": paths } }
+
+    def save_images(self, images, output_path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        def map_filename(filename):
+            prefix_len = len(filename_prefix)
+            prefix = filename[:prefix_len + 1]
+            try:
+                digits = int(filename[prefix_len + 1:].split('_')[0])
+            except:
+                digits = 0
+            return (digits, prefix)
+        
+        imgCount = 1
+        paths = list()
+        for image in images:
+            i = 255. * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = PngInfo()
             
-        # Ensure content to save
-        if filename.strip == '':
-            print(f'\033[34mWAS NS\033[0m Error: There is no text specified to save! Text is empty.')
-        text = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
-        
-        
-        filename = self.make_filename(seed, modelname, filename)   
+            if prompt is not None:
+                metadata.add_text("prompt", json.dumps(prompt))
+            if extra_pnginfo is not None:
+                for x in extra_pnginfo:
+                    metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+
+            if(images.size()[0] > 1):
+                filename_prefix += "_{:02d}".format(imgCount)
+
+            file = f"{filename_prefix}.{extension}"
+            if extension == 'png':
+                img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
+            elif extension == 'webp':
+                img.save(os.path.join(output_path, file), quality=quality)
+            elif extension == 'jpeg':
+                img.save(os.path.join(output_path, file), quality=quality, comment=comment, optimize=True)
+            elif extension == 'tiff':
+                img.save(os.path.join(output_path, file), quality=quality, optimize=True)
+            else:
+                img.save(os.path.join(output_path, file))
+            paths.append(file)
+            imgCount += 1
+        return(paths)
+
+    def save_text_file(self, filename, output_path, positive="", negative="", seed=0, modelname=""):
         # Write text file
-        self.writeTextFile(os.path.join(path, filename + '.txt'), text)
+        self.writeTextFile(os.path.join(path, filename + '.txt'), text_data)
         
         return( text, )
 
@@ -938,24 +941,27 @@ class WLSH_Image_Save_With_Prompt_File:
             with open(file, 'w') as f:
                 f.write(content)
         except OSError:
-            print(f'\033[34mWAS Node Suite\033[0m Error: Unable to save file `{file}`')    
+            print('Unable to save file `{file}`')    
 
 class WLSH_Save_Prompt_File:
     def __init__(s):
-        pass
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
 
     @classmethod
     def INPUT_TYPES(s):
         return {
                     "required": {
                         "filename": ("STRING",{"default": 'info', "multiline": False}),
-                        "path": ("STRING", {"default": './output', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
                         "positive": ("STRING",{"default": '', "multiline": True}),
                     },
                     "optional": {
                         "negative": ("STRING",{"default": '', "multiline": True}),
                         "modelname": ("STRING",{"default": '', "multiline": False}),
                         "seed": ("SEED",),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                     }
                 }
                 
@@ -965,36 +971,24 @@ class WLSH_Save_Prompt_File:
 
     CATEGORY = "WLSH Nodes/IO"
     
-    def save_text_file(self, positive="", negative="", seed=0, path="./output", modelname="", filename="info"):
+    def save_text_file(self, positive="", negative="", seed=0, path="", modelname="", counter=0, time_format="%Y-%m-%d-%H%M%S", filename=""):
         
-        # Ensure path exists
-        if not os.path.exists(path):
-            print(f'\033[34mWAS NS\033[0m Error: The path `{path}` doesn\'t exist!')
-            
-        # Ensure content to save
-        if filename.strip == '':
-            print(f'\033[34mWAS NS\033[0m Error: There is no text specified to save! Text is empty.')
-        text = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nSeed: " + str(seed['seed'])
+        output_path = os.path.join(self.output_dir,path)
+
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+
+        text_data = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nSeed: " + str(seed['seed'])
         
         
-        filename = self.make_filename(seed, modelname, filename)   
+        filename = make_filename(filename, seed, modelname, counter, time_format)
         # Write text file
-        self.writeTextFile(os.path.join(path, filename + '.txt'), text)
+        self.writeTextFile(os.path.join(path, filename + '.txt'), text_data)
         
         return( text, )
-
-    def make_filename(self, seed, modelname="", filename=""):
-        # generate datetime string
-        now = datetime.now()
-        timestamp = now.strftime("%Y-%m-%d-%H%M%S")
-
-        # parse input string
-        filename = filename.replace("%time",timestamp)
-        filename = filename.replace("%model",modelname)
-        filename = filename.replace("%seed",str(seed['seed']))
-        
-
-        return (filename)   
 
     # Save Text FileNotFoundError
     def writeTextFile(self, file, content):
@@ -1002,18 +996,19 @@ class WLSH_Save_Prompt_File:
             with open(file, 'w') as f:
                 f.write(content)
         except OSError:
-            print(f'\033[34mWAS Node Suite\033[0m Error: Unable to save file `{file}`')
+            print(f'Error: Unable to save file `{file}`')
 
 class WLSH_Save_Positive_Prompt_File:
     def __init__(s):
-        pass
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
 
     @classmethod
     def INPUT_TYPES(s):
         return {
                     "required": {
                         "filename": ("STRING",{"default": 'info', "multiline": False}),
-                        "path": ("STRING", {"default": './output', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
                         "positive": ("STRING",{"default": '', "multiline": True}),
                     }
                 }
@@ -1024,19 +1019,25 @@ class WLSH_Save_Positive_Prompt_File:
 
     CATEGORY = "WLSH Nodes/IO"
     
-    def save_text_file(self, positive="", path="./output", filename="info"):
+    def save_text_file(self, positive="", path="", filename=""):
         
-        # Ensure path exists
-        if not os.path.exists(path):
-            print(f'\033[34mWAS NS\033[0m Error: The path `{path}` doesn\'t exist!')
-            
-        # Ensure content to save
+        output_path = os.path.join(self.output_dir,path)
+
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+
+        # Ensure content to save, use timestamp if no name given
         if filename.strip == '':
-            print(f'\033[34mWAS NS\033[0m Error: There is no text specified to save! Text is empty.')
-      
+            print(f'Warning: There is no text specified to save! Text is empty.  Saving file with timestamp')
+            filename = get_timestamp('%Y%m%d%H%M%S')
         
-        # filename = self.make_filename(seed, modelname, filename)   
-        # Write text file
+        # Write text file after checking for empty prompt
+        if positive == "":
+            positive ="No prompt data"
+        
         self.writeTextFile(os.path.join(path, filename + '.txt'), positive)
         
         return( positive, )
@@ -1047,12 +1048,41 @@ class WLSH_Save_Positive_Prompt_File:
             with open(file, 'w') as f:
                 f.write(content)
         except OSError:
-            print(f'\033[34mWAS Node Suite\033[0m Error: Unable to save file `{file}`')
+            print(f'Error: Unable to save file `{file}`')
+
+
+class WLSH_Build_Filename_String:
+    def __init__(s):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+                    "required": {
+                        "filename": ("STRING",{"%time_%seed": 'info', "multiline": False}),
+                    },
+                    "optional": {
+                        "modelname": ("STRING",{"default": '', "multiline": False}),
+                        "seed": ("SEED",),
+                        "counter": ("SEED",{"default": 0}),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                    }
+                }
+                
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "build_filename"
+
+    CATEGORY = "WLSH Nodes/text"
+
+    def build_filename(self, filename="ComfyUI", modelname="model", time_format="%Y-%m-%d-%H%M%S", seed=0, counter=0):
+
+        filename = make_filename(filename,seed,modelname,counter,time_format)
+        return(filename)
 
 NODE_CLASS_MAPPINGS = {
     "Checkpoint Loader w/Name (WLSH)": WLSH_Checkpoint_Loader_Model_Name,
     "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvancedMod,
-    "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
+    # "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
     "Seed to Number (WLSH)": WLSH_Seed_to_Number,
     "Seed and Int (WLSH)": WLSH_Seed_and_Int,
     "SDXL Steps (WLSH)": WLSH_SDXL_Steps,
@@ -1075,5 +1105,6 @@ NODE_CLASS_MAPPINGS = {
     "Save Prompt Info (WLSH)": WLSH_Save_Prompt_File,
     "Image Save with Prompt File (WLSH)": WLSH_Image_Save_With_Prompt_File,
     "Save Positive Prompt File (WLSH)": WLSH_Save_Positive_Prompt_File,
+    "Build Filename String (WLSH)": WLSH_Build_Filename_String,
 }
 
