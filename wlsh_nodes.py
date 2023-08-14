@@ -732,10 +732,7 @@ def make_filename(filename="ComfyUI", seed={"seed":0}, modelname="sd", counter=0
     timestamp = get_timestamp(time_format)
 
     # parse input string
-
-    print("filename: ", filename)
     filename = filename.replace("%time",timestamp)
-
     filename = filename.replace("%model",modelname)
     filename = filename.replace("%seed",str(seed['seed']))
     filename = filename.replace("%counter",str(counter))  
@@ -884,7 +881,7 @@ class WLSH_Image_Save_With_Prompt_File:
                 os.makedirs(output_path, exist_ok=True)    
                 
         paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
-        self.save_text_file(filename, output_path, positive, negative, seed, modelname)
+        self.save_text_file(filename, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }
 
@@ -929,11 +926,11 @@ class WLSH_Image_Save_With_Prompt_File:
             imgCount += 1
         return(paths)
 
-    def save_text_file(self, filename, output_path, positive="", negative="", seed=0, modelname=""):
+    def save_text_file(self, filename, output_path, comment="", seed=0, modelname=""):
         # Write text file
-        self.writeTextFile(os.path.join(path, filename + '.txt'), text_data)
+        self.writeTextFile(os.path.join(output_path, filename + '.txt'), comment)
         
-        return( text, )
+        return
 
     # Save Text FileNotFoundError
     def writeTextFile(self, file, content):
@@ -944,7 +941,7 @@ class WLSH_Image_Save_With_Prompt_File:
             print('Unable to save file `{file}`')    
 
 class WLSH_Save_Prompt_File:
-    def __init__(s):
+    def __init__(self):
         # get default output directory
         self.output_dir = folder_paths.output_directory
 
@@ -986,9 +983,9 @@ class WLSH_Save_Prompt_File:
         
         filename = make_filename(filename, seed, modelname, counter, time_format)
         # Write text file
-        self.writeTextFile(os.path.join(path, filename + '.txt'), text_data)
+        self.writeTextFile(os.path.join(output_path, filename + '.txt'), text_data)
         
-        return( text, )
+        return( text_data, )
 
     # Save Text FileNotFoundError
     def writeTextFile(self, file, content):
@@ -999,7 +996,7 @@ class WLSH_Save_Prompt_File:
             print(f'Error: Unable to save file `{file}`')
 
 class WLSH_Save_Positive_Prompt_File:
-    def __init__(s):
+    def __init__(self):
         # get default output directory
         self.output_dir = folder_paths.output_directory
 
@@ -1038,7 +1035,7 @@ class WLSH_Save_Positive_Prompt_File:
         if positive == "":
             positive ="No prompt data"
         
-        self.writeTextFile(os.path.join(path, filename + '.txt'), positive)
+        self.writeTextFile(os.path.join(output_path, filename + '.txt'), positive)
         
         return( positive, )
 
