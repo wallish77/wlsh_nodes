@@ -9,3 +9,6 @@
 - **Added INFO as output to custom KSamplerAdvanced**  INFO is a dictionary containing a bunch of the configuration data for that sampler node.
 
 - **Added INFO input to Image/Prompt save nodes** Can be used to append more information to the metadata.
+
+- **Converted SEED input types to INT** Fixed need for `SEED` type inputs on sampler and file saves.  May require re-routing old workflows.
+
