@@ -6,7 +6,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 The regular checkpoint loader with an output that provides the name of the loaded model as a string for use in saving filenames
 
 ### KSamplerAdvanced (WLSH)
-Modified version of the advanced KSampler to return the `denoising` option for experimentation
+Modified version of the advanced KSampler to return the `denoising` option for experimentation.  Also provides the INFO output that provides sampler settings for use in other nodes.
 
 ### Seed to Number
 Converts a `SEED` type to an `INT`, which was needed for some third party nodes
@@ -60,7 +60,9 @@ Does what it says on the tin.  Scales using an upscale model, but lets you defin
 Take an input image and do a quick simple scale (or scale & crop) to one of the ideal SDXL resolutions
 
 ### Image Save with Prompt Data
-Save an image with prompt information embedded as a comment or exif data similar to how Auto1111 does it.  Need to feed it various pieces of information and then specify the filename syntax for replacement if desired.  Filename ptions include `%time` for timestamp, `%model` for model name (via input node or text box), `%seed` for the seed (via input node), and `%counter` for the integer counter (via primative node with 'increment' option ideally).  Writes the above as well as positive and negative prompts (**convert their widgets to inputs to connect to a prompt string box for easy automation**).  As far as I can tell, does not remove the ComfyUI 'embed workflow' feature.
+Save an image with prompt information embedded as a comment or exif data similar to how Auto1111 does it.  Need to feed it various pieces of information and then specify the filename syntax for replacement if desired.  Filename ptions include `%time` for timestamp, `%model` for model name (via input node or text box), `%seed` for the seed (via input node), and `%counter` for the integer counter (via primative node with 'increment' option ideally).  Writes the above as well as positive and negative prompts (**convert their widgets to inputs to connect to a prompt string box for easy automation**).  As far as I can tell, does not remove the ComfyUI 'embed workflow' feature for PNG.
+
+Many options are optional for saving.
 
 ### Save Prompt Info
 As the above, but to a txt file
@@ -70,6 +72,9 @@ Combination of the above two
 
 ### Save Positive Prompt File
 Saves just the connected text info (expected to be the positive prompt) to help with training.  Make sure to do matching filenames!
+
+### Read Prompt Data from Image
+Extra image metadata from Auto1111-sourced images or from images saved with the nodes in this pack.  Can then connect these outputs to other nodes.
 
 ### Build Filename String
 Takes inputs similar to the Image Save node, used to build a filename which can be passed to multiple other nodes
