@@ -68,13 +68,13 @@ class WLSH_Checkpoint_Loader_Model_Name:
         return filename
 
 # sampling
-class WLSH_KSamplerAdvancedMod:
+class WLSH_KSamplerAdvanced:
     @classmethod
     def INPUT_TYPES(s):
         return {"required":
                     {"model": ("MODEL",),
                     "add_noise": (["enable", "disable"], ),
-                    "seed": ("SEED", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
@@ -89,22 +89,24 @@ class WLSH_KSamplerAdvancedMod:
                      }
                 }
 
-    RETURN_TYPES = ("LATENT",)
+    RETURN_TYPES = ("LATENT","INFO",)
     FUNCTION = "sample"
 
     CATEGORY = "WLSH Nodes/sampling"
 
     def sample(self, model, add_noise, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, start_at_step, end_at_step, return_with_leftover_noise, denoise):
-        noise_seed = seed['seed']
         force_full_denoise = False
         if return_with_leftover_noise == "enable":
             force_full_denoise = False
         disable_noise = False
         if add_noise == "disable":
             disable_noise = True
-        
-        return common_ksampler(model, noise_seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, 
+
+        info = {"Seed: ": seed, "Steps: ": steps, "CFG scale: ": cfg, "Sampler: ": sampler_name, "Scheduler: ": scheduler, "Start at step: ": start_at_step, "End at step: ": end_at_step, "Denoising strength: ": denoise}    
+        samples = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image,
         denoise=denoise, disable_noise=disable_noise, start_step=start_at_step, last_step=end_at_step, force_full_denoise=force_full_denoise)
+
+        return (samples[0], info)
 
 
 class WLSH_Alternating_KSamplerAdvanced:
@@ -277,6 +279,7 @@ class WLSH_Time_String:
         }
     
     RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("time_format",)
     FUNCTION = "get_time"
 
     CATEGORY = "WLSH Nodes/text"
@@ -303,6 +306,7 @@ class WLSH_SDXL_Resolutions:
             }
         }
     RETURN_TYPES = ("INT","INT",)
+    RETURN_NAMES = ("width", "height",)
     FUNCTION = "get_resolutions"
 
     CATEGORY="WLSH Nodes"
@@ -326,6 +330,7 @@ class WLSH_Resolutions_by_Ratio:
                               "direction": (s.direction,),
                               "shortside": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64})}}
     RETURN_TYPES = ("INT","INT",)
+    RETURN_NAMES = ("width", "height",)
     FUNCTION = "get_resolutions"
     CATEGORY="WLSH Nodes"
 
@@ -407,6 +412,7 @@ class WLSH_CLIP_Text_Positive_Negative:
          "negative": ("STRING", {"multiline": True}),
          "clip": ("CLIP", )}}
     RETURN_TYPES = ("CONDITIONING","CONDITIONING","STRING","STRING")
+    RETURN_NAMES = ("positive", "negative","positive_text","negative_text")
     FUNCTION = "encode"
 
     CATEGORY = "WLSH Nodes/conditioning"
@@ -423,6 +429,7 @@ class WLSH_CLIP_Positive_Negative:
             "negative_text": ("STRING",{"default": f'', "multiline": True})
             }}
     RETURN_TYPES = ("CONDITIONING","CONDITIONING",)
+    RETURN_NAMES = ("positive", "negative",)
     FUNCTION = "encode"
 
     CATEGORY = "WLSH Nodes/conditioning"
@@ -734,12 +741,35 @@ def make_filename(filename="ComfyUI", seed={"seed":0}, modelname="sd", counter=0
     # parse input string
     filename = filename.replace("%time",timestamp)
     filename = filename.replace("%model",modelname)
-    filename = filename.replace("%seed",str(seed['seed']))
+    filename = filename.replace("%seed",str(seed))
     filename = filename.replace("%counter",str(counter))  
 
     if filename == "":
         filename = timestamp
     return(filename)  
+
+def make_comment(positive, negative, modelname="unknown", seed=-1, info=None):
+    comment = ""
+    if(info is None):
+        comment = "Positive prompt:\n" + positive + "\nNegative prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed)
+        return comment
+    else:
+        # reformat to stop long precision
+        try:
+            info['CFG scale: '] = "{:.2f}".format(info['CFG scale: '])
+        except:
+            pass
+        try:
+            info['Denoising strength: '] = "{:.2f}".format(info['Denoising strength: '])
+        except:
+            pass
+
+        comment = "Positive prompt:\n" + positive + "\nNegative prompt:\n" + negative + "\nModel: " + modelname
+        for key in info:
+            newline = "\n" + key + str(info[key])
+            comment += newline
+    # print(comment)
+    return comment
 
 class WLSH_Image_Save_With_Prompt_Info:
     def __init__(self):
@@ -757,12 +787,13 @@ class WLSH_Image_Save_With_Prompt_Info:
                         "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
                     },
                     "optional": {
-                        "positive": ("STRING",{"default": '', "multiline": True}),
-                        "negative": ("STRING",{"default": '', "multiline": True}),
-                        "seed": ("SEED",),
+                        "positive": ("STRING",{"default": '', "multiline": True, "hideWidget": True}, ),
+                        "negative": ("STRING",{"default": '', "multiline": True}, ),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "modelname": ("STRING",{"default": '', "multiline": False}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                        "info": ("INFO",)
                     },
                     "hidden": {
                         "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
@@ -776,10 +807,12 @@ class WLSH_Image_Save_With_Prompt_Info:
 
     CATEGORY = "WLSH Nodes/IO"
 
-    def save_files(self, images, positive="unknown", negative="unknown", seed={"seed": 0}, modelname="sd", counter=0, filename='', path="",
-    time_format="%Y-%m-%d-%H%M%S", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+    def save_files(self, images, positive="unknown", negative="unknown", seed=-1, modelname="unknown", info=None, counter=0, filename='', path="",
+    time_format="%Y-%m-%d-%H%M%S",  extension='png', quality=100, prompt=None, extra_pnginfo=None):
         filename = make_filename(filename, seed, modelname, counter, time_format)
-        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
+        comment = make_comment(positive, negative, modelname, seed, info)
+        # comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed)
+
         output_path = os.path.join(self.output_dir,path)
         
         # create missing paths - from WAS Node Suite
@@ -814,12 +847,14 @@ class WLSH_Image_Save_With_Prompt_Info:
             if extra_pnginfo is not None:
                 for x in extra_pnginfo:
                     metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-
+            metadata.add_text("parameters", comment)
+            metadata.add_text("comment", comment)
             if(images.size()[0] > 1):
                 filename_prefix += "_{:02d}".format(imgCount)
 
             file = f"{filename_prefix}.{extension}"
             if extension == 'png':
+                # print(comment)
                 img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
             elif extension == 'webp':
                 img.save(os.path.join(output_path, file), quality=quality)
@@ -849,12 +884,13 @@ class WLSH_Image_Save_With_Prompt_File:
                         "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
                     },
                     "optional": {
-                        "positive": ("STRING",{"default": ' ', "multiline": True}),
-                        "negative": ("STRING",{"default": ' ', "multiline": True}),
-                        "seed": ("SEED",),
-                        "modelname": ("STRING",{"default": 'sd', "multiline": False}),
+                        "positive": ("STRING",{"default": '', "multiline": True}),
+                        "negative": ("STRING",{"default": '', "multiline": True}),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "modelname": ("STRING",{"default": '', "multiline": False}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                        "info": ("INFO",)
                     },
                     "hidden": {
                         "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
@@ -868,10 +904,10 @@ class WLSH_Image_Save_With_Prompt_File:
 
     CATEGORY = "WLSH Nodes/IO"
 
-    def save_files(self, images, positive="unknown", negative="unknown", seed={"seed": 0}, modelname="sd", counter=0, filename='', path="",
+    def save_files(self, images, positive="unknown", negative="unknown", seed=-1, modelname="unknown", info=None, counter=0, filename='', path="",
     time_format="%Y-%m-%d-%H%M%S", extension='png', quality=100, prompt=None, extra_pnginfo=None):
         filename = make_filename(filename, seed, modelname, counter, time_format)
-        comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed['seed'])
+        comment = make_comment(positive, negative, modelname, seed, info)
         output_path = os.path.join(self.output_dir,path)
         
         # create missing paths - from WAS Node Suite
@@ -907,12 +943,13 @@ class WLSH_Image_Save_With_Prompt_File:
             if extra_pnginfo is not None:
                 for x in extra_pnginfo:
                     metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-
+            metadata.add_text("parameters", comment)
             if(images.size()[0] > 1):
                 filename_prefix += "_{:02d}".format(imgCount)
 
             file = f"{filename_prefix}.{extension}"
             if extension == 'png':
+                # print(comment)
                 img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
             elif extension == 'webp':
                 img.save(os.path.join(output_path, file), quality=quality)
@@ -956,9 +993,10 @@ class WLSH_Save_Prompt_File:
                     "optional": {
                         "negative": ("STRING",{"default": '', "multiline": True}),
                         "modelname": ("STRING",{"default": '', "multiline": False}),
-                        "seed": ("SEED",),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                        "info": ("INFO",)
                     }
                 }
                 
@@ -968,7 +1006,7 @@ class WLSH_Save_Prompt_File:
 
     CATEGORY = "WLSH Nodes/IO"
     
-    def save_text_file(self, positive="", negative="", seed=0, path="", modelname="", counter=0, time_format="%Y-%m-%d-%H%M%S", filename=""):
+    def save_text_file(self, positive="", negative="", seed=-1, modelname="unknown", info=None, path="", counter=0, time_format="%Y-%m-%d-%H%M%S", filename=""):
         
         output_path = os.path.join(self.output_dir,path)
 
@@ -978,7 +1016,7 @@ class WLSH_Save_Prompt_File:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
 
-        text_data = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nSeed: " + str(seed['seed'])
+        text_data = make_comment(positive, negative, modelname, seed, info)
         
         
         filename = make_filename(filename, seed, modelname, counter, time_format)
@@ -1047,6 +1085,160 @@ class WLSH_Save_Positive_Prompt_File:
         except OSError:
             print(f'Error: Unable to save file `{file}`')
 
+class WLSH_Read_Prompt:
+    @classmethod
+    def INPUT_TYPES(s):
+        input_dir = folder_paths.get_input_directory()
+        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
+        return {"required":
+                    {
+                        "verbose": (["true", "false"],),
+                        "image": (sorted(files), ),   
+                    },
+                }
+    CATEGORY = "WLSH Nodes/IO"
+    ''' Return order:
+        positive prompt(string), negative prompt(string), seed(int), steps(int), cfg(float), 
+        width(int), height(int)
+    '''
+    RETURN_TYPES = ("IMAGE", "STRING","STRING","INT", "INT", "FLOAT", "INT","INT")
+    RETURN_NAMES = ("image", "positive", "negative", "seed", "steps", "cfg", "width", "height")
+    FUNCTION = "get_image_data"
+    
+    def get_image_data(self, image, verbose):
+        image_path = folder_paths.get_annotated_filepath(image)
+        with open(image_path,'rb') as file:
+            img = Image.open(file)
+            extension = image_path.split('.')[-1]
+            image = img.convert("RGB")
+            image = np.array(image).astype(np.float32) / 255.0
+            image = torch.from_numpy(image)[None,]
+
+        parameters = ""
+        comfy = False
+        if extension.lower() == 'png':
+            try:
+                parameters = img.info['parameters']
+                if not parameters.startswith("Positive prompt"):
+                    parameters = "Positive prompt: " + parameters
+            except:
+                print("Error loading prompt info")
+                return "Error loading prompt info."
+        elif extension.lower() in ("jpg", "jpeg", "webp"):
+            try:
+                exif = piexif.load(img.info["exif"])
+                parameters = (exif or {}).get("Exif", {}).get(piexif.ExifIFD.UserComment, b'')
+                parameters = piexif.helper.UserComment.load(parameters)
+                if not parameters.startswith("Positive prompt"):
+                    parameters = "Positive prompt: " + parameters
+            except:
+                try:
+                    parameters = str(img.info['comment'])
+                    comfy = True
+                    # legacy fixes
+                    parameters = parameters.replace("Positive Prompt", "Positive prompt")
+                    parameters = parameters.replace("Negative Prompt", "Negative prompt")
+                    parameters = parameters.replace("Start at Step", "Start at step")
+                    parameters = parameters.replace("End at Step", "End at step")
+                    parameters = parameters.replace("Denoising Strength", "Denoising strength")
+                except:
+                    print("Error loading prompt info")
+                    return "Error loading prompt info."
+        if(comfy and extension.lower() == 'jpeg'):
+            parameters = parameters.replace('\\n',' ')
+        else:
+            parameters = parameters.replace('\n',' ')
+
+
+        patterns = [
+            "Positive prompt: ",
+            "Negative prompt: ",
+            "Steps: ",
+            "Start at step: ",
+            "End at step: ",
+            "Sampler: ",
+            "Scheduler: ",
+            "CFG scale: ",
+            "Seed: ",
+            "Size: ",
+            "Model: ",
+            "Model hash: ",
+            "Denoising strength: ",
+            "Version: ",
+            "ControlNet 0",
+            "Controlnet 1",
+            "Batch size: ",
+            "Batch pos: ",
+            "Hires upscale: ",
+            "Hires steps: ",
+            "Hires upscaler: ",
+            "Template: ",
+            "Negative Template: ",
+        ]
+        if(comfy and extension.lower() == 'jpeg'):
+            parameters = parameters[2:]
+            parameters = parameters[:-1]
+
+        keys = re.findall("|".join(patterns), parameters)
+        values = re.split("|".join(patterns), parameters)
+        values = [x for x in values if x]
+        results = {}
+        result_string = ""
+        for item in range(len(keys)):
+            result_string += keys[item] + values[item].rstrip(', ')
+            result_string += "\n"
+            results[keys[item].replace(": ","")] = values[item].rstrip(', ')
+            
+        if(verbose == "true"):
+            print(result_string)
+
+        try:
+            positive = results['Positive prompt']
+        except:
+            positive = ""
+        try:
+            negative = results['Negative prompt']
+        except:
+            negative = ""
+        try:
+            seed = int(results['Seed'])
+        except:
+            seed = -1
+        try:
+            steps = int(results['Steps'])
+        except:
+            steps = 20
+        try:
+            cfg = float(results['CFG scale'])
+        except:
+            cfg = 8.0
+        try:
+            width,height = img.size
+        except:
+            width,height = 512,512
+        
+        ''' Return order:
+            positive prompt(string), negative prompt(string), seed(int), steps(int), cfg(float), 
+            width(int), height(int)
+        '''
+
+        return(image, positive, negative, seed, steps, cfg, width, height)
+    
+    @classmethod
+    def IS_CHANGED(s, image, verbose):
+        image_path = folder_paths.get_annotated_filepath(image)
+        m = hashlib.sha256()
+        with open(image_path, 'rb') as f:
+            m.update(f.read())
+        return m.digest().hex()
+
+    @classmethod
+    def VALIDATE_INPUTS(s, image, verbose):
+        if not folder_paths.exists_annotated_filepath(image):
+            return "Invalid image file: {}".format(image)
+
+        return True
+
 
 class WLSH_Build_Filename_String:
     def __init__(s):
@@ -1060,13 +1252,14 @@ class WLSH_Build_Filename_String:
                     },
                     "optional": {
                         "modelname": ("STRING",{"default": '', "multiline": False}),
-                        "seed": ("SEED",),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "counter": ("SEED",{"default": 0}),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                     }
                 }
                 
     RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("filename",)
     FUNCTION = "build_filename"
 
     CATEGORY = "WLSH Nodes/text"
@@ -1076,9 +1269,11 @@ class WLSH_Build_Filename_String:
         filename = make_filename(filename,seed,modelname,counter,time_format)
         return(filename)
 
+
+
 NODE_CLASS_MAPPINGS = {
     "Checkpoint Loader w/Name (WLSH)": WLSH_Checkpoint_Loader_Model_Name,
-    "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvancedMod,
+    "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvanced,
     # "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
     "Seed to Number (WLSH)": WLSH_Seed_to_Number,
     "Seed and Int (WLSH)": WLSH_Seed_and_Int,
@@ -1102,6 +1297,7 @@ NODE_CLASS_MAPPINGS = {
     "Save Prompt Info (WLSH)": WLSH_Save_Prompt_File,
     "Image Save with Prompt File (WLSH)": WLSH_Image_Save_With_Prompt_File,
     "Save Positive Prompt File (WLSH)": WLSH_Save_Positive_Prompt_File,
+    "Read Prompt Data from Image (WLSH)": WLSH_Read_Prompt,
     "Build Filename String (WLSH)": WLSH_Build_Filename_String,
 }
 
