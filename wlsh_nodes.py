@@ -1122,8 +1122,8 @@ class WLSH_Read_Prompt:
                 if not parameters.startswith("Positive prompt"):
                     parameters = "Positive prompt: " + parameters
             except:
-                print("Error loading prompt info")
-                return "Error loading prompt info."
+                print("Error loading prompt info from png")
+                # return "Error loading prompt info."
         elif extension.lower() in ("jpg", "jpeg", "webp"):
             try:
                 exif = piexif.load(img.info["exif"])
@@ -1142,8 +1142,8 @@ class WLSH_Read_Prompt:
                     parameters = parameters.replace("End at Step", "End at step")
                     parameters = parameters.replace("Denoising Strength", "Denoising strength")
                 except:
-                    print("Error loading prompt info")
-                    return "Error loading prompt info."
+                    print("Error loading prompt info from jpeg")
+                    # return "Error loading prompt info."
         if(comfy and extension.lower() == 'jpeg'):
             parameters = parameters.replace('\\n',' ')
         else:
