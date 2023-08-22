@@ -1134,6 +1134,7 @@ class WLSH_Read_Prompt:
                 if not parameters.startswith("Positive prompt"):
                     parameters = "Positive prompt: " + parameters
             except:
+                parameters = ""
                 print("Error loading prompt info from png")
                 # return "Error loading prompt info."
         elif extension.lower() in ("jpg", "jpeg", "webp"):
@@ -1154,8 +1155,10 @@ class WLSH_Read_Prompt:
                     parameters = parameters.replace("End at Step", "End at step")
                     parameters = parameters.replace("Denoising Strength", "Denoising strength")
                 except:
+                    parameters = ""
                     print("Error loading prompt info from jpeg")
                     # return "Error loading prompt info."
+
         if(comfy and extension.lower() == 'jpeg'):
             parameters = parameters.replace('\\n',' ')
         else:
