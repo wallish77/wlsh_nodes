@@ -43,6 +43,7 @@ class WLSH_Checkpoint_Loader_Model_Name:
         return {"required": { "ckpt_name": (folder_paths.get_filename_list("checkpoints"), ),
                              }}
     RETURN_TYPES = ("MODEL", "CLIP", "VAE","STRING",)
+    RETURN_NAMES = ("MODEL", "CLIP", "VAE", "modelname")
     FUNCTION = "load_checkpoint"
 
     CATEGORY = "WLSH Nodes/loaders"
@@ -774,6 +775,7 @@ def make_comment(positive, negative, modelname="unknown", seed=-1, info=None):
 class WLSH_Image_Save_With_Prompt_Info:
     def __init__(self):
         # get default output directory
+        self.type = "output"
         self.output_dir = folder_paths.output_directory
 
     @classmethod
@@ -821,11 +823,11 @@ class WLSH_Image_Save_With_Prompt_Info:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
                 
-        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
+        paths = self.save_images(images, output_path,path, filename,comment, extension, quality, prompt, extra_pnginfo)
         
         return { "ui": { "images": paths } }
 
-    def save_images(self, images, output_path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+    def save_images(self, images, output_path, path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
         def map_filename(filename):
             prefix_len = len(filename_prefix)
             prefix = filename[:prefix_len + 1]
@@ -864,14 +866,20 @@ class WLSH_Image_Save_With_Prompt_Info:
                 img.save(os.path.join(output_path, file), quality=quality, optimize=True)
             else:
                 img.save(os.path.join(output_path, file))
-            paths.append(file)
+            paths.append({
+                "filename": file,
+                "subfolder": path,
+                "type": self.type
+            })
             imgCount += 1
         return(paths)
+        
 
 class WLSH_Image_Save_With_Prompt_File:
     def __init__(self):
         # get default output directory
         self.output_dir = folder_paths.output_directory
+        self.type = "output"
 
     @classmethod
     def INPUT_TYPES(s):
@@ -917,11 +925,11 @@ class WLSH_Image_Save_With_Prompt_File:
                 os.makedirs(output_path, exist_ok=True)    
                 
         paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
-        self.save_text_file(filename, output_path, comment, seed, modelname)
+        self.save_text_file(filename,path, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }
 
-    def save_images(self, images, output_path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+    def save_images(self, images, output_path, path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
         def map_filename(filename):
             prefix_len = len(filename_prefix)
             prefix = filename[:prefix_len + 1]
@@ -959,7 +967,11 @@ class WLSH_Image_Save_With_Prompt_File:
                 img.save(os.path.join(output_path, file), quality=quality, optimize=True)
             else:
                 img.save(os.path.join(output_path, file))
-            paths.append(file)
+            paths.append({
+                "filename": file,
+                "subfolder": path,
+                "type": self.type
+            })
             imgCount += 1
         return(paths)
 
