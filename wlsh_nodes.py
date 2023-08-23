@@ -437,6 +437,99 @@ class WLSH_CLIP_Positive_Negative:
 
     def encode(self, clip, positive_text, negative_text):
         return ([[clip.encode(positive_text), {}]],[[clip.encode(negative_text), {}]] )
+
+class WLSH_CLIP_Text_Positive_Negative_XL:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+            "width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "crop_w": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
+            "crop_h": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
+            "target_width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "target_height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}), "clip": ("CLIP", ),
+            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}), "clip": ("CLIP", ),
+            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), "clip": ("CLIP", ),
+            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), "clip": ("CLIP", ),
+            }}
+
+    RETURN_TYPES = ("CONDITIONING","CONDITIONING","STRING","STRING")
+    RETURN_NAMES = ("positive", "negative", "positive_text", "negative_text")
+    FUNCTION = "encode"
+
+    CATEGORY = "WLSH Nodes/conditioning"
+
+    def encode(self, clip, width, height, crop_w, crop_h, target_width, target_height, positive_g, positive_l,negative_g, negative_l):
+        tokens = clip.tokenize(positive_g)
+        tokens["l"] = clip.tokenize(positive_l)["l"]
+        if len(tokens["l"]) != len(tokens["g"]):
+            empty = clip.tokenize("")
+            while len(tokens["l"]) < len(tokens["g"]):
+                tokens["l"] += empty["l"]
+            while len(tokens["l"]) > len(tokens["g"]):
+                tokens["g"] += empty["g"]
+        condP, pooledP = clip.encode_from_tokens(tokens, return_pooled=True)
+        tokensN = clip.tokenize(negative_g)
+        tokensN["l"] = clip.tokenize(negative_l)["l"]
+        if len(tokensN["l"]) != len(tokensN["g"]):
+            empty = clip.tokenize("")
+            while len(tokensN["l"]) < len(tokensN["g"]):
+                tokensN["l"] += empty["l"]
+            while len(tokensN["l"]) > len(tokensN["g"]):
+                tokensN["g"] += empty["g"]
+        condN, pooledN = clip.encode_from_tokens(tokensN, return_pooled=True)
+        
+        #combine pos_l and pos_g prompts
+        positive_text = positive_g + ", " + positive_l
+        negative_text = negative_g + ", " + negative_l
+        return ([[condP, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]],[[condN, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]], positive_text, negative_text, )
+
+
+class WLSH_CLIP_Positive_Negative_XL:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+            "width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "crop_w": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
+            "crop_h": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
+            "target_width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "target_height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}), "clip": ("CLIP", ),
+            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}), "clip": ("CLIP", ),
+            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), "clip": ("CLIP", ),
+            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), "clip": ("CLIP", ),
+            }}
+
+    RETURN_TYPES = ("CONDITIONING","CONDITIONING",)
+    RETURN_NAMES = ("positive", "negative",)
+    FUNCTION = "encode"
+
+    CATEGORY = "WLSH Nodes/conditioning"
+
+    def encode(self, clip, width, height, crop_w, crop_h, target_width, target_height, positive_g, positive_l,negative_g, negative_l):
+        tokens = clip.tokenize(positive_g)
+        tokens["l"] = clip.tokenize(positive_l)["l"]
+        if len(tokens["l"]) != len(tokens["g"]):
+            empty = clip.tokenize("")
+            while len(tokens["l"]) < len(tokens["g"]):
+                tokens["l"] += empty["l"]
+            while len(tokens["l"]) > len(tokens["g"]):
+                tokens["g"] += empty["g"]
+        condP, pooledP = clip.encode_from_tokens(tokens, return_pooled=True)
+        tokensN = clip.tokenize(negative_g)
+        tokensN["l"] = clip.tokenize(negative_l)["l"]
+        if len(tokensN["l"]) != len(tokensN["g"]):
+            empty = clip.tokenize("")
+            while len(tokensN["l"]) < len(tokensN["g"]):
+                tokensN["l"] += empty["l"]
+            while len(tokensN["l"]) > len(tokensN["g"]):
+                tokensN["g"] += empty["g"]
+        condN, pooledN = clip.encode_from_tokens(tokensN, return_pooled=True)
+        return ([[condP, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]],[[condN, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]], )
+
+
 # upscaling
 class WLSH_Image_Scale_By_Factor:
     upscale_methods = ["nearest-exact", "bilinear", "area"]
@@ -1105,7 +1198,7 @@ class WLSH_Read_Prompt:
         return {"required":
                     {
                         "verbose": (["true", "false"],),
-                        "image": (sorted(files), ),   
+                        "image": (sorted(files),  {"image_upload": True}),   
                     },
                 }
     CATEGORY = "WLSH Nodes/IO"
@@ -1284,8 +1377,6 @@ class WLSH_Build_Filename_String:
         filename = make_filename(filename,seed,modelname,counter,time_format)
         return(filename)
 
-
-
 NODE_CLASS_MAPPINGS = {
     "Checkpoint Loader w/Name (WLSH)": WLSH_Checkpoint_Loader_Model_Name,
     "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvanced,
@@ -1301,6 +1392,8 @@ NODE_CLASS_MAPPINGS = {
     "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
     "CLIP Positive-Negative (WLSH)": WLSH_CLIP_Positive_Negative,
     "CLIP Positive-Negative w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative,
+    "CLIP Positive-Negative XL (WLSH)": WLSH_CLIP_Positive_Negative_XL,
+    "CLIP Positive-Negative XL w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative_XL,
     "Outpaint to Image (WLSH)": WLSH_Outpaint_To_Image,
     "VAE Encode for Inpaint Padding (WLSH)": WLSH_VAE_Encode_For_Inpaint_Padding,
     "Generate Edge Mask (WLSH)": WLSH_Generate_Edge_Mask,
@@ -1313,6 +1406,9 @@ NODE_CLASS_MAPPINGS = {
     "Image Save with Prompt File (WLSH)": WLSH_Image_Save_With_Prompt_File,
     "Save Positive Prompt File (WLSH)": WLSH_Save_Positive_Prompt_File,
     "Read Prompt Data from Image (WLSH)": WLSH_Read_Prompt,
-    "Build Filename String (WLSH)": WLSH_Build_Filename_String,
+    "Build Filename String (WLSH)": WLSH_Build_Filename_String
 }
 
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "Read Prompt Data from Image (WLSH)": "Image Load with Prompt Data (WLSH)"
+}
