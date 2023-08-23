@@ -36,10 +36,10 @@ Similar to Empty Latent by Ratio, but returns integer `width` and `height` for u
 Quickly generate an empty latent of a size from a list of ideal SDXL image sizes
 
 ### CLIP Positive-Negative
-Simple CLIP box containing positive and negative prompt boxes.  Mostly a space saver
+Simple CLIP box containing positive and negative prompt boxes.  Mostly a space saver.  Also available as an SDXL version.
 
 ### Clip Postive-Negative w/Text
-Same as the above, but with two output ndoes to provide the positive and negative inputs to other nodes
+Same as the above, but with two output ndoes to provide the positive and negative inputs to other nodes.  Also available as an SDXL version
 
 ### Outpaint to Image
 Extends an image in a selected direction by a number of pixels and outputs the expanded image and a mask of the outpainted region with some blurred border padding.
@@ -74,7 +74,7 @@ Combination of the above two
 Saves just the connected text info (expected to be the positive prompt) to help with training.  Make sure to do matching filenames!
 
 ### Read Prompt Data from Image
-Extra image metadata from Auto1111-sourced images or from images saved with the nodes in this pack.  Can then connect these outputs to other nodes.
+Extra image metadata from Auto1111-sourced images or from images saved with the nodes in this pack.  Can then connect these outputs to other nodes.   Requires comfyUI commit d7b3b0f8c11c6261d0d8b859ea98f2d818b7e67d to show preview of selected image
 
 ### Build Filename String
 Takes inputs similar to the Image Save node, used to build a filename which can be passed to multiple other nodes

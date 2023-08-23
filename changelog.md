@@ -1,5 +1,13 @@
 # Changelog
 
+## 2023-08-22
+
+- **Updated Read Prompt Data From Image node.** Using comfyUI commit d7b3b0f8c11c6261d0d8b859ea98f2d818b7e67d, allows for preview of selected image.
+
+- **SDXL version of CLIP Positive-Negative nodes**.
+
+- **Image save nodes preview**. Now shows previews of images saved in image output nodes
+
 ## 2023-08-19
 
 - **Added "Read Prompt Data from Image" node.** Use this to read various metadata from Auto1111 or from images saved with tthe prompt medatada from this node pack.
