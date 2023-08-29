@@ -252,7 +252,7 @@ class WLSH_Int_Multiply:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "number": ("INT",{"default": 2, "min": 1, "max": 10000}),
+                "number": ("INT",{"default": 2, "min": 1, "max": 10000, "forceInput": True}),
                 "multiplier": ("INT", {"default": 2, "min": 1, "max": 10000}),
             }
         }
@@ -882,10 +882,10 @@ class WLSH_Image_Save_With_Prompt_Info:
                         "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
                     },
                     "optional": {
-                        "positive": ("STRING",{"default": '', "multiline": True, "hideWidget": True}, ),
-                        "negative": ("STRING",{"default": '', "multiline": True}, ),
+                        "positive": ("STRING",{ "multiline": True, "forceInput": True}, ),
+                        "negative": ("STRING",{"multiline": True, "forceInput": True}, ),
                         "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
-                        "modelname": ("STRING",{"default": '', "multiline": False}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                         "info": ("INFO",)
@@ -985,10 +985,10 @@ class WLSH_Image_Save_With_Prompt_File:
                         "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
                     },
                     "optional": {
-                        "positive": ("STRING",{"default": '', "multiline": True}),
-                        "negative": ("STRING",{"default": '', "multiline": True}),
+                        "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                        "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
                         "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
-                        "modelname": ("STRING",{"default": '', "multiline": False}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                         "info": ("INFO",)
@@ -1093,11 +1093,11 @@ class WLSH_Save_Prompt_File:
                     "required": {
                         "filename": ("STRING",{"default": 'info', "multiline": False}),
                         "path": ("STRING", {"default": '', "multiline": False}),
-                        "positive": ("STRING",{"default": '', "multiline": True}),
+                        "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
                     },
                     "optional": {
-                        "negative": ("STRING",{"default": '', "multiline": True}),
-                        "modelname": ("STRING",{"default": '', "multiline": False}),
+                        "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
                         "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
@@ -1149,7 +1149,7 @@ class WLSH_Save_Positive_Prompt_File:
                     "required": {
                         "filename": ("STRING",{"default": 'info', "multiline": False}),
                         "path": ("STRING", {"default": '', "multiline": False}),
-                        "positive": ("STRING",{"default": '', "multiline": True}),
+                        "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
                     }
                 }
                 

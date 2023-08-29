@@ -1,5 +1,8 @@
 # Changelog
 
+## 2023-08-28
+Changed input types for several nodes to default to 'input' instead of 'widget'.  For example, the file save nodes won't have prompt text boxes.
+
 ## 2023-08-22
 
 - **Updated Read Prompt Data From Image node.** Using comfyUI commit d7b3b0f8c11c6261d0d8b859ea98f2d818b7e67d, allows for preview of selected image.
