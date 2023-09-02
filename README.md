@@ -26,6 +26,11 @@ Simple math node to multiple an integer by an integer.
 ### Time String
 Returns a formatted string of the current time in the selected format.  Useful for filenames or debugging
 
+### Simple Pattern Replace (WLSH)
+Takes in an input string and a list string and does a simple find/replace and returns a new string.  Can choose a custom delimiter for the list string in case you want to use commas in the list.  If multiple entries of the pattern are in the input, each will get their own random entry. 
+
+Example: Input of `drawing of a $animal and a $animal`, pattern of `$animal`, and list of `dog, cat, bird` will get you something like `drawing of a dog and a bird` (or potentially `drawing of a dog and a dog`).
+
 ### Empty Latent by Ratio
 Quickly generate an empty latent by selecting an aspect ratio, an orientation (landscape or portrait) and the length of the 'shorter' side
 

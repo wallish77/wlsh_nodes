@@ -17,10 +17,10 @@ from torchvision.transforms import ToPILImage
 #from deepface import DeepFace
 
 import re
+import random
 import latent_preview
 from datetime import datetime
 import json
-import re
 import piexif
 import piexif.helper
 
@@ -116,7 +116,7 @@ class WLSH_Alternating_KSamplerAdvanced:
         return {"required":
                     {"model": ("MODEL",),
                     "add_noise": (["enable", "disable"], ),
-                    "seed": ("SEED", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                    "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                     "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                     "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
                     "sampler_name": (comfy.samplers.KSampler.SAMPLERS, ),
@@ -138,7 +138,7 @@ class WLSH_Alternating_KSamplerAdvanced:
     CATEGORY = "WLSH Nodes/sampling"
 
     def sample(self, model, add_noise, seed, steps, cfg, sampler_name, scheduler, clip, positive_prompt, negative_prompt, latent_image, start_at_step, end_at_step, return_with_leftover_noise, denoise):
-        noise_seed = seed['seed']
+        noise_seed = seed
         force_full_denoise = False
         if return_with_leftover_noise == "enable":
             force_full_denoise = False
@@ -290,6 +290,62 @@ class WLSH_Time_String:
         timestamp = now.strftime(style)
 
         return (timestamp,)
+
+
+# Takes an input string and a list string, uses pattern and
+# delimiter from inputs to parse the list_string and replace pattern
+# in the input_string
+class WLSH_Simple_Pattern_Replace:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", {"multiline": True, "forceInput": True}),
+                "list_string": ("STRING", {"default": f''}),
+                "pattern": ("STRING", {"default": f'$var'}),
+                "delimiter": ("STRING", {"default": f','}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("string",)
+
+    FUNCTION = "replace_string"
+
+    CATEGORY = "WLSH Nodes/text"
+
+    def replace_string(self, input_string, list_string, pattern, delimiter, seed):
+        # escape special characters and strip whitespace from pattern
+        pattern = re.escape(pattern).strip()
+
+        # find all pattern entries from input and create list
+        regex = re.compile(pattern)
+        matches = regex.findall(input_string)
+
+        # return input if nothing found
+        if not matches:
+            return (input_string,)
+        
+        if seed is not None:
+            random.seed(seed)
+        
+        # if provided delimiter not present in input, will try to use whole list
+        # we do not want that to happen...
+        if delimiter not in list_string:
+            raise ValueError("Delimiter not found in list_string")
+        
+        # if pattern appears more than once each entry will have a different random choice
+        def replace(match):
+            return random.choice(list_string.split(delimiter))
+
+        new_string = regex.sub(replace, input_string)
+
+        return (new_string,)
+
 
 class WLSH_SDXL_Resolutions:
     resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
@@ -1388,6 +1444,7 @@ NODE_CLASS_MAPPINGS = {
     "Resolutions by Ratio (WLSH)": WLSH_Resolutions_by_Ratio,
     "Multiply Integer (WLSH)": WLSH_Int_Multiply,
     "Time String (WLSH)": WLSH_Time_String,
+    "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
     "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,
     "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
     "CLIP Positive-Negative (WLSH)": WLSH_CLIP_Positive_Negative,

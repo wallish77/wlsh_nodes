@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-09-01
+
+- Added 'Simple Pattern Replace' node
+
 ## 2023-08-28
 Changed input types for several nodes to default to 'input' instead of 'widget'.  For example, the file save nodes won't have prompt text boxes.
 
