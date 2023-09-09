@@ -940,7 +940,7 @@ class WLSH_Image_Save_With_Prompt_Info:
                     "optional": {
                         "positive": ("STRING",{ "multiline": True, "forceInput": True}, ),
                         "negative": ("STRING",{"multiline": True, "forceInput": True}, ),
-                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                         "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
@@ -1043,7 +1043,7 @@ class WLSH_Image_Save_With_Prompt_File:
                     "optional": {
                         "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
                         "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
-                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                         "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
@@ -1154,7 +1154,7 @@ class WLSH_Save_Prompt_File:
                     "optional": {
                         "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
                         "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
-                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
                         "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
                         "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
                         "info": ("INFO",)
