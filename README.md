@@ -32,13 +32,16 @@ Takes in an input string and a list string and does a simple find/replace and re
 Example: Input of `drawing of a $animal and a $animal`, pattern of `$animal`, and list of `dog, cat, bird` will get you something like `drawing of a dog and a bird` (or potentially `drawing of a dog and a dog`).
 
 ### Empty Latent by Ratio
-Quickly generate an empty latent by selecting an aspect ratio, an orientation (landscape or portrait) and the length of the 'shorter' side
+Quickly generate an empty latent by selecting an aspect ratio, an orientation (landscape or portrait) and the length of the 'shorter' side.  Also provides the height and width as integers for plugging in elsewhere.
 
 ### Resolutions by Ratio
 Similar to Empty Latent by Ratio, but returns integer `width` and `height` for use with other nodes.
 
+### Empty Latent by Pixels
+Quickly generate an empty latent by selecting an aspect ratio, an orientation (landscape or portrait) and the the number of megapixels (1MP = 1024 * 1024 in this case).  Also provides the height and width as integers for plugging in elsewhere.
+
 ### SDXL Quick Empty Latent
-Quickly generate an empty latent of a size from a list of ideal SDXL image sizes
+Quickly generate an empty latent of a size from a list of ideal SDXL image sizes.  Also provides the height and width as integers for plugging in elsewhere.
 
 ### CLIP Positive-Negative
 Simple CLIP box containing positive and negative prompt boxes.  Mostly a space saver.  Also available as an SDXL version.

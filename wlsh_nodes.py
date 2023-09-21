@@ -236,9 +236,10 @@ class WLSH_SDXL_Steps:
             }
         }
     RETURN_TYPES = ("INT","INT","INT",)
+    RETURN_NAMES = ("pre", "base", "total")
     FUNCTION = "set_steps"
 
-    CATEGORY="WLSH Nodes"
+    CATEGORY="WLSH Nodes/number"
 
 
     def set_steps(self,precondition,base,total):
@@ -366,7 +367,7 @@ class WLSH_SDXL_Resolutions:
     RETURN_NAMES = ("width", "height",)
     FUNCTION = "get_resolutions"
 
-    CATEGORY="WLSH Nodes"
+    CATEGORY="WLSH Nodes/number"
 
 
     def get_resolutions(self,resolution, direction):
@@ -389,7 +390,7 @@ class WLSH_Resolutions_by_Ratio:
     RETURN_TYPES = ("INT","INT",)
     RETURN_NAMES = ("width", "height",)
     FUNCTION = "get_resolutions"
-    CATEGORY="WLSH Nodes"
+    CATEGORY="WLSH Nodes/number"
 
     def get_resolutions(self, aspect, direction, shortside):
         x,y = aspect.split(':')
@@ -405,7 +406,7 @@ class WLSH_Resolutions_by_Ratio:
 
 # latent
 class WLSH_Empty_Latent_Image_By_Ratio:
-    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
 
     def __init__(self, device="cpu"):
@@ -417,7 +418,8 @@ class WLSH_Empty_Latent_Image_By_Ratio:
                               "direction": (s.direction,),
                               "shortside": ("INT", {"default": 512, "min": 64, "max": MAX_RESOLUTION, "step": 64}),
                               "batch_size": ("INT", {"default": 1, "min": 1, "max": 64})}}
-    RETURN_TYPES = ("LATENT",)
+    RETURN_TYPES = ("LATENT","INT","INT",)
+    RETURN_NAMES = ("latent", "width", "height",)
     FUNCTION = "generate"
 
     CATEGORY = "WLSH Nodes/latent"
@@ -432,8 +434,49 @@ class WLSH_Empty_Latent_Image_By_Ratio:
         height = shortside
         if(direction == "portrait"):
             width,height = height,width
-        latent = torch.zeros([batch_size, 4, height // 8, width // 8])
-        return ({"samples":latent}, )
+        adj_width = width // 8
+        adj_height = height // 8
+        latent = torch.zeros([batch_size, 4, adj_height, adj_width])
+        return ({"samples":latent}, adj_width,adj_height, )
+
+class WLSH_Empty_Latent_Image_By_Pixels:
+    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
+    direction = ["landscape","portrait"]
+
+    def __init__(self, device="cpu"):
+        self.device = device
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "aspect": (s.aspects,),
+                              "direction": (s.direction,),
+                              "megapixels": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 16.0, "step": 0.01}),
+                              "batch_size": ("INT", {"default": 1, "min": 1, "max": 64})}}
+    RETURN_TYPES = ("LATENT","INT","INT",)
+    RETURN_NAMES = ("latent", "width", "height",)
+    FUNCTION = "generate"
+
+    CATEGORY = "WLSH Nodes/latent"
+
+    def generate(self, aspect, direction, megapixels, batch_size=1):
+        x,y = aspect.split(':')
+        x = int(x)
+        y = int(y)
+        ratio = x/y
+        
+        total = int(megapixels * 1024 * 1024)
+
+        width = int(np.sqrt(ratio * total))
+        width = (width + 63) & (-64)
+        height = int(np.sqrt(1/ratio * total))
+        height = (height + 63) & (-64)
+        if(direction == "portrait"):
+            width,height = height,width
+        adj_width = width // 8
+        adj_height = height // 8
+        latent = torch.zeros([batch_size, 4, adj_height, adj_width])
+        return ({"samples":latent}, adj_width, adj_height, )
+
 
 class WLSH_SDXL_Quick_Empty_Latent:
     resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
@@ -447,7 +490,8 @@ class WLSH_SDXL_Quick_Empty_Latent:
         return {"required": { "resolution": (s.resolution,),
                               "direction": (s.direction,),
                               "batch_size": ("INT", {"default": 1, "min": 1, "max": 64})}}
-    RETURN_TYPES = ("LATENT",)
+    RETURN_TYPES = ("LATENT","INT","INT", )
+    RETURN_NAMES = ("latent", "width", "height",)
     FUNCTION = "generate"
 
     CATEGORY = "WLSH Nodes/latent"
@@ -458,8 +502,28 @@ class WLSH_SDXL_Quick_Empty_Latent:
         height = int(height)
         if(direction == "portrait"):
             width,height = height,width
-        latent = torch.zeros([batch_size, 4, height // 8, width // 8])
-        return ({"samples":latent}, )
+        adj_width = width // 8
+        adj_height = height // 8
+        latent = torch.zeros([batch_size, 4, adj_height, adj_width])
+        return ({"samples":latent}, adj_width, adj_height,)
+
+class WLSH_SDXL_Resolution_Multiplier:
+    def __init__(self, device="cpu"):
+        self.device = device
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "target_width": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "step": 8, "forceInput": True}),
+                              "target_height": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "step": 8, "forceInput": True}),
+                              "multiplier": ("INT", {"default": 2, "min": 1, "max": 12})}}
+    RETURN_TYPES = ("INT","INT", )
+    RETURN_NAMES = ("width", "height",)
+    FUNCTION = "multiply_res"
+
+    CATEGORY = "WLSH Nodes/number"
+
+    def multiply_res(self, target_width=1024, target_height=1024, multiplier=2):
+        return (target_width*2, target_height*2,)
 
 # conditioning
 class WLSH_CLIP_Text_Positive_Negative:
@@ -504,10 +568,11 @@ class WLSH_CLIP_Text_Positive_Negative_XL:
             "crop_h": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
             "target_width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
             "target_height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
-            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}), "clip": ("CLIP", ),
-            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}), "clip": ("CLIP", ),
-            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), "clip": ("CLIP", ),
-            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), "clip": ("CLIP", ),
+            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}),
+            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}),
+            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), 
+            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), 
+            "clip": ("CLIP", ),
             }}
 
     RETURN_TYPES = ("CONDITIONING","CONDITIONING","STRING","STRING")
@@ -552,10 +617,11 @@ class WLSH_CLIP_Positive_Negative_XL:
             "crop_h": ("INT", {"default": 0, "min": 0, "max": MAX_RESOLUTION}),
             "target_width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
             "target_height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
-            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}), "clip": ("CLIP", ),
-            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}), "clip": ("CLIP", ),
-            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), "clip": ("CLIP", ),
-            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), "clip": ("CLIP", ),
+            "positive_g": ("STRING", {"multiline": True, "default": "POS_G"}),
+            "positive_l": ("STRING", {"multiline": True, "default": "POS_L"}), 
+            "negative_g": ("STRING", {"multiline": True, "default": "NEG_G"}), 
+            "negative_l": ("STRING", {"multiline": True, "default": "NEG_L"}), 
+            "clip": ("CLIP", ),
             }}
 
     RETURN_TYPES = ("CONDITIONING","CONDITIONING",)
@@ -1446,7 +1512,9 @@ NODE_CLASS_MAPPINGS = {
     "Time String (WLSH)": WLSH_Time_String,
     "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
     "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,
+    "Empty Latent by Pixels (WLSH)": WLSH_Empty_Latent_Image_By_Pixels,
     "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
+    "SDXL Resolution Multiplier (WLSH)": WLSH_SDXL_Resolution_Multiplier,
     "CLIP Positive-Negative (WLSH)": WLSH_CLIP_Positive_Negative,
     "CLIP Positive-Negative w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative,
     "CLIP Positive-Negative XL (WLSH)": WLSH_CLIP_Positive_Negative_XL,

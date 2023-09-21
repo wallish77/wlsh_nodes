@@ -1,5 +1,16 @@
 # Changelog
 
+## 2023-09-20
+
+- Added 19:9 aspect ratio to empty latent by ratio node (and others)
+
+- Added width/height output to empty latents (so you don't need a separate node)
+
+- Added "Empty Latent by Pixels" which lets you set aspect ratio and megapixels total
+
+- Moved the resolution number nodes to a numbers category
+
+
 ## 2023-09-01
 
 - Added 'Simple Pattern Replace' node
