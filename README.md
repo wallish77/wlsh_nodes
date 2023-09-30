@@ -36,7 +36,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 
 | Node Name | Description |
 |-----------|-------------|
-|Image Load with Metadata| Extract image metadata from Auto1111-sourced images or from images saved with the nodes in this pack.  Can then connect these outputs to other nodes.   Requires comfyUI commit d7b3b0f8c11c6261d0d8b859ea98f2d818b7e67d to show preview of selected image|
+|Image Load with Metadata| Extract image metadata from Auto1111-sourced images or from images saved with the nodes in this pack.  Can then connect these outputs to other nodes.   Requires comfyUI commit d7b3b0f8c11c6261d0d8b859ea98f2d818b7e67d or newer to show preview of selected image|
 
 ## Inpainting
 
