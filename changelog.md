@@ -1,5 +1,23 @@
 # Changelog
 
+## 2023-09-30
+
+- Added non-INFO variant of file IO nodes to quick-fix a compatibility issue that seems to crop up with the TTN suite
+
+- Renamed "Read Image with Prompt" to "Image Load with Metadata" and moved it to the 'image' category
+
+- Re-ordered node loading to make categories of WLSH submenu be in a more reasonable order
+
+- Redo of README for readability
+
+- Updated workflow png
+
+## 2023-09-25
+
+- Added "Empty Latent by Size" node to set latent size directly but return width and height
+
+- Added "Quick Resolution Multiplier" node to quickly multiply an input height and width (for SDXL)
+
 ## 2023-09-20
 
 - Added 19:9 aspect ratio to empty latent by ratio node (and others)

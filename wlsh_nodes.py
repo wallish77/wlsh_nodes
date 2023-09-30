@@ -267,6 +267,31 @@ class WLSH_Int_Multiply:
         result = number*multiplier
         return (int(result),)
 
+class WLSH_Res_Multiply:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "width": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "forceInput": True}),
+                "height": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "forceInput": True}),
+                "multiplier": ("INT", {"default": 2, "min": 1, "max": 10000}),
+            }
+        }
+    RETURN_TYPES = ("INT","INT",)
+    RETURN_NAMES = ("width","height",)
+    FUNCTION = "multiply"
+
+    CATEGORY="WLSH Nodes/number"
+
+
+    def multiply(self,width, height,multiplier):
+        adj_width = width*multiplier
+        adj_height = height*multiplier
+        return (int(adj_width),int(adj_height),)
+
 class WLSH_Time_String:
     time_format = ["%Y%m%d%H%M%S","%Y%m%d%H%M","%Y%m%d","%Y-%m-%d-%H%M%S", "%Y-%m-%d-%H%M", "%Y-%m-%d"]
     def __init__(self):
@@ -403,6 +428,27 @@ class WLSH_Resolutions_by_Ratio:
         if(direction == "portrait"):
             width,height = height,width
         return(width,height)
+
+class WLSH_Empty_Latent_Image_By_Resolution:
+    def __init__(self, device="cpu"):
+        self.device = device
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "width": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "step": 8}),
+                              "height": ("INT", {"default": 512, "min": 16, "max": MAX_RESOLUTION, "step": 8}),
+                              "batch_size": ("INT", {"default": 1, "min": 1, "max": 4096})}}
+    RETURN_TYPES = ("LATENT","INT","INT",)
+    RETURN_NAMES = ("latent", "width", "height",)
+    FUNCTION = "generate"
+
+    CATEGORY = "WLSH Nodes/latent"
+
+    def generate(self, width, height, batch_size=1):
+        adj_width = width // 8
+        adj_height = height // 8
+        latent = torch.zeros([batch_size, 4, adj_height, adj_width])
+        return ({"samples":latent}, adj_width,adj_height, )
 
 # latent
 class WLSH_Empty_Latent_Image_By_Ratio:
@@ -987,6 +1033,108 @@ def make_comment(positive, negative, modelname="unknown", seed=-1, info=None):
     # print(comment)
     return comment
 
+# version without INFO input for TTN compatability
+class WLSH_Image_Save_With_Prompt:
+    def __init__(self):
+        # get default output directory
+        self.type = "output"
+        self.output_dir = folder_paths.output_directory
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+                    "required": {
+                        "images": ("IMAGE", ),
+                        "filename": ("STRING", {"default": f'%time_%seed', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
+                        "extension": (['png', 'jpeg', 'tiff', 'gif'], ),
+                        "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
+                    },
+                    "optional": {
+                        "positive": ("STRING",{ "multiline": True, "forceInput": True}, ),
+                        "negative": ("STRING",{"multiline": True, "forceInput": True}, ),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                    },
+                    "hidden": {
+                        "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
+                    },
+                }
+
+    RETURN_TYPES = ()
+    FUNCTION = "save_files"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "WLSH Nodes/IO"
+
+    def save_files(self, images, positive="unknown", negative="unknown", seed=-1, modelname="unknown", counter=0, filename='', path="",
+    time_format="%Y-%m-%d-%H%M%S",  extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        filename = make_filename(filename, seed, modelname, counter, time_format)
+        comment = make_comment(positive, negative, modelname, seed, info=None)
+        # comment = "Positive Prompt:\n" + positive + "\nNegative Prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed)
+
+        output_path = os.path.join(self.output_dir,path)
+        
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+                
+        paths = self.save_images(images, output_path,path, filename,comment, extension, quality, prompt, extra_pnginfo)
+        
+        return { "ui": { "images": paths } }
+
+    def save_images(self, images, output_path, path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        def map_filename(filename):
+            prefix_len = len(filename_prefix)
+            prefix = filename[:prefix_len + 1]
+            try:
+                digits = int(filename[prefix_len + 1:].split('_')[0])
+            except:
+                digits = 0
+            return (digits, prefix)
+        
+        imgCount = 1
+        paths = list()
+        for image in images:
+            i = 255. * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = PngInfo()
+            
+            if prompt is not None:
+                metadata.add_text("prompt", json.dumps(prompt))
+            if extra_pnginfo is not None:
+                for x in extra_pnginfo:
+                    metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+            metadata.add_text("parameters", comment)
+            metadata.add_text("comment", comment)
+            if(images.size()[0] > 1):
+                filename_prefix += "_{:02d}".format(imgCount)
+
+            file = f"{filename_prefix}.{extension}"
+            if extension == 'png':
+                # print(comment)
+                img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
+            elif extension == 'webp':
+                img.save(os.path.join(output_path, file), quality=quality)
+            elif extension == 'jpeg':
+                img.save(os.path.join(output_path, file), quality=quality, comment=comment, optimize=True)
+            elif extension == 'tiff':
+                img.save(os.path.join(output_path, file), quality=quality, optimize=True)
+            else:
+                img.save(os.path.join(output_path, file))
+            paths.append({
+                "filename": file,
+                "subfolder": path,
+                "type": self.type
+            })
+            imgCount += 1
+        return(paths)
+
 class WLSH_Image_Save_With_Prompt_Info:
     def __init__(self):
         # get default output directory
@@ -1087,10 +1235,9 @@ class WLSH_Image_Save_With_Prompt_Info:
                 "type": self.type
             })
             imgCount += 1
-        return(paths)
-        
+        return(paths)        
 
-class WLSH_Image_Save_With_Prompt_File:
+class WLSH_Image_Save_With_File_Info:
     def __init__(self):
         # get default output directory
         self.output_dir = folder_paths.output_directory
@@ -1202,9 +1349,177 @@ class WLSH_Image_Save_With_Prompt_File:
             with open(file, 'w') as f:
                 f.write(content)
         except OSError:
-            print('Unable to save file `{file}`')    
+            print('Unable to save file `{file}`')
+
+class WLSH_Image_Save_With_File:
+    def __init__(self):
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
+        self.type = "output"
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+                    "required": {
+                        "images": ("IMAGE", ),                   
+                        "filename": ("STRING", {"default": f'%time_%seed', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
+                        "extension": (['png', 'jpeg', 'tiff', 'gif'], ),
+                        "quality": ("INT", {"default": 100, "min": 1, "max": 100, "step": 1}),
+                    },
+                    "optional": {
+                        "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                        "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                    },
+                    "hidden": {
+                        "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
+                    },
+                }
+
+    RETURN_TYPES = ()
+    FUNCTION = "save_files"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "WLSH Nodes/IO"
+
+    def save_files(self, images, positive="unknown", negative="unknown", seed=-1, modelname="unknown", counter=0, filename='', path="",
+    time_format="%Y-%m-%d-%H%M%S", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        filename = make_filename(filename, seed, modelname, counter, time_format)
+        comment = make_comment(positive, negative, modelname, seed, info=None)
+        output_path = os.path.join(self.output_dir,path)
+        
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+                
+        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
+        self.save_text_file(filename,path, output_path, comment, seed, modelname)
+        #return
+        return { "ui": { "images": paths } }
+
+    def save_images(self, images, output_path, path, filename_prefix="ComfyUI", comment="", extension='png', quality=100, prompt=None, extra_pnginfo=None):
+        def map_filename(filename):
+            prefix_len = len(filename_prefix)
+            prefix = filename[:prefix_len + 1]
+            try:
+                digits = int(filename[prefix_len + 1:].split('_')[0])
+            except:
+                digits = 0
+            return (digits, prefix)
+        
+        imgCount = 1
+        paths = list()
+        for image in images:
+            i = 255. * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = PngInfo()
+            
+            if prompt is not None:
+                metadata.add_text("prompt", json.dumps(prompt))
+            if extra_pnginfo is not None:
+                for x in extra_pnginfo:
+                    metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+            metadata.add_text("parameters", comment)
+            if(images.size()[0] > 1):
+                filename_prefix += "_{:02d}".format(imgCount)
+
+            file = f"{filename_prefix}.{extension}"
+            if extension == 'png':
+                # print(comment)
+                img.save(os.path.join(output_path, file), comment=comment, pnginfo=metadata, optimize=True)
+            elif extension == 'webp':
+                img.save(os.path.join(output_path, file), quality=quality)
+            elif extension == 'jpeg':
+                img.save(os.path.join(output_path, file), quality=quality, comment=comment, optimize=True)
+            elif extension == 'tiff':
+                img.save(os.path.join(output_path, file), quality=quality, optimize=True)
+            else:
+                img.save(os.path.join(output_path, file))
+            paths.append({
+                "filename": file,
+                "subfolder": path,
+                "type": self.type
+            })
+            imgCount += 1
+        return(paths)
+
+    def save_text_file(self, filename, output_path, comment="", seed=0, modelname=""):
+        # Write text file
+        self.writeTextFile(os.path.join(output_path, filename + '.txt'), comment)
+        
+        return
+
+    # Save Text FileNotFoundError
+    def writeTextFile(self, file, content):
+        try:
+            with open(file, 'w') as f:
+                f.write(content)
+        except OSError:
+            print('Unable to save file `{file}`')                    
 
 class WLSH_Save_Prompt_File:
+    def __init__(self):
+        # get default output directory
+        self.output_dir = folder_paths.output_directory
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+                    "required": {
+                        "filename": ("STRING",{"default": 'info', "multiline": False}),
+                        "path": ("STRING", {"default": '', "multiline": False}),
+                        "positive": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                    },
+                    "optional": {
+                        "negative": ("STRING",{"default": '', "multiline": True, "forceInput": True}),
+                        "modelname": ("STRING",{"default": '', "multiline": False, "forceInput": True}),
+                        "seed": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff, "forceInput": True}),
+                        "counter": ("INT",{"default": 0, "min": 0, "max": 0xffffffffffffffff }),
+                        "time_format": ("STRING", {"default": "%Y-%m-%d-%H%M%S", "multiline": False}),
+                    }
+                }
+                
+    OUTPUT_NODE = True
+    RETURN_TYPES = ()
+    FUNCTION = "save_text_file"
+
+    CATEGORY = "WLSH Nodes/IO"
+    
+    def save_text_file(self, positive="", negative="", seed=-1, modelname="unknown", path="", counter=0, time_format="%Y-%m-%d-%H%M%S", filename=""):
+        
+        output_path = os.path.join(self.output_dir,path)
+
+        # create missing paths - from WAS Node Suite
+        if output_path.strip() != '':
+            if not os.path.exists(output_path.strip()):
+                print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
+                os.makedirs(output_path, exist_ok=True)    
+
+        text_data = make_comment(positive, negative, modelname, seed, info=None)
+        
+        
+        filename = make_filename(filename, seed, modelname, counter, time_format)
+        # Write text file
+        self.writeTextFile(os.path.join(output_path, filename + '.txt'), text_data)
+        
+        return( text_data, )
+
+    # Save Text FileNotFoundError
+    def writeTextFile(self, file, content):
+        try:
+            with open(file, 'w') as f:
+                f.write(content)
+        except OSError:
+            print(f'Error: Unable to save file `{file}`')
+
+class WLSH_Save_Prompt_File_Info:
     def __init__(self):
         # get default output directory
         self.output_dir = folder_paths.output_directory
@@ -1323,7 +1638,7 @@ class WLSH_Read_Prompt:
                         "image": (sorted(files),  {"image_upload": True}),   
                     },
                 }
-    CATEGORY = "WLSH Nodes/IO"
+    CATEGORY = "WLSH Nodes/image"
     ''' Return order:
         positive prompt(string), negative prompt(string), seed(int), steps(int), cfg(float), 
         width(int), height(int)
@@ -1500,40 +1815,49 @@ class WLSH_Build_Filename_String:
         return(filename)
 
 NODE_CLASS_MAPPINGS = {
+    #loaders
     "Checkpoint Loader w/Name (WLSH)": WLSH_Checkpoint_Loader_Model_Name,
+    #samplers
     "KSamplerAdvanced (WLSH)": WLSH_KSamplerAdvanced,
     # "Alternating KSampler (WLSH)": WLSH_Alternating_KSamplerAdvanced,
-    "Seed to Number (WLSH)": WLSH_Seed_to_Number,
-    "Seed and Int (WLSH)": WLSH_Seed_and_Int,
-    "SDXL Steps (WLSH)": WLSH_SDXL_Steps,
-    "SDXL Resolutions (WLSH)": WLSH_SDXL_Resolutions,
-    "Resolutions by Ratio (WLSH)": WLSH_Resolutions_by_Ratio,
-    "Multiply Integer (WLSH)": WLSH_Int_Multiply,
-    "Time String (WLSH)": WLSH_Time_String,
-    "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
-    "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,
-    "Empty Latent by Pixels (WLSH)": WLSH_Empty_Latent_Image_By_Pixels,
-    "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
-    "SDXL Resolution Multiplier (WLSH)": WLSH_SDXL_Resolution_Multiplier,
+    #conditioning
     "CLIP Positive-Negative (WLSH)": WLSH_CLIP_Positive_Negative,
     "CLIP Positive-Negative w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative,
     "CLIP Positive-Negative XL (WLSH)": WLSH_CLIP_Positive_Negative_XL,
     "CLIP Positive-Negative XL w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative_XL,
+    #latent
+    "Empty Latent by Pixels (WLSH)": WLSH_Empty_Latent_Image_By_Pixels,
+    "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,
+    "Empty Latent by Size (WLSH)": WLSH_Empty_Latent_Image_By_Resolution,
+    "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
+    #image
+    "Image Load with Metadata (WLSH)": WLSH_Read_Prompt,
+    #inpainting
+    "Generate Border Mask (WLSH)": WLSH_Generate_Edge_Mask,
     "Outpaint to Image (WLSH)": WLSH_Outpaint_To_Image,
-    "VAE Encode for Inpaint Padding (WLSH)": WLSH_VAE_Encode_For_Inpaint_Padding,
-    "Generate Edge Mask (WLSH)": WLSH_Generate_Edge_Mask,
-    # "Generate Face Mask (WLSH)": WLSH_Generate_Face_Mask,
+    "VAE Encode for Inpaint w/Padding (WLSH)": WLSH_VAE_Encode_For_Inpaint_Padding,
+    #upscaling
     "Image Scale By Factor (WLSH)": WLSH_Image_Scale_By_Factor,
-    "Upscale by Factor with Model (WLSH)": WLSH_Upscale_By_Factor_With_Model,
     "SDXL Quick Image Scale (WLSH)": WLSH_SDXL_Quick_Image_Scale,
-    "Image Save with Prompt Data (WLSH)": WLSH_Image_Save_With_Prompt_Info,
-    "Save Prompt Info (WLSH)": WLSH_Save_Prompt_File,
-    "Image Save with Prompt File (WLSH)": WLSH_Image_Save_With_Prompt_File,
-    "Save Positive Prompt File (WLSH)": WLSH_Save_Positive_Prompt_File,
-    "Read Prompt Data from Image (WLSH)": WLSH_Read_Prompt,
-    "Build Filename String (WLSH)": WLSH_Build_Filename_String
-}
-
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "Read Prompt Data from Image (WLSH)": "Image Load with Prompt Data (WLSH)"
+    "Upscale by Factor with Model (WLSH)": WLSH_Upscale_By_Factor_With_Model,
+    #numbers
+    "Multiply Integer (WLSH)": WLSH_Int_Multiply,
+    "Quick Resolution Multiply (WLSH)": WLSH_Res_Multiply,
+    "Resolutions by Ratio (WLSH)": WLSH_Resolutions_by_Ratio,
+    "Seed to Number (WLSH)": WLSH_Seed_to_Number,
+    "Seed and Int (WLSH)": WLSH_Seed_and_Int,
+    "SDXL Steps (WLSH)": WLSH_SDXL_Steps,
+    "SDXL Resolutions (WLSH)": WLSH_SDXL_Resolutions,
+    #text
+    "Build Filename String (WLSH)": WLSH_Build_Filename_String,
+    "Time String (WLSH)": WLSH_Time_String,
+    "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
+    #IO
+    "Image Save with Prompt (WLSH)": WLSH_Image_Save_With_Prompt,
+    "Image Save with Prompt/Info (WLSH)": WLSH_Image_Save_With_Prompt_Info,
+    "Image Save with Prompt File (WLSH)": WLSH_Image_Save_With_File,
+    "Image Save with Prompt/Info File (WLSH)": WLSH_Image_Save_With_File_Info,
+    "Save Prompt (WLSH)": WLSH_Save_Prompt_File,
+    "Save Prompt/Info (WLSH)": WLSH_Save_Prompt_File_Info,
+    "Save Positive Prompt(WLSH)": WLSH_Save_Positive_Prompt_File
 }
