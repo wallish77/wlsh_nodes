@@ -89,7 +89,7 @@ Various nodes for file saving.  Most of these come with an "info" variant that r
 ## Disabled or Non-Functional Nodes
 | Node Name | Description |
 |-----------|-------------|
-|Alternating KSampler| Work in progress.  Attempting to recreate the alternating prompts of Auto1111.  Provide a prompt with the syntax "<foo|bar>" for it to alternate between "foo" and "bar" (and any number of others) before looping back around to the first entry.  Currently not functional due to sampling issues, but the prompt alternating logic works.|
+|Alternating KSampler| Work in progress.  Attempting to recreate the alternating prompts of Auto1111.  Provide a prompt with the syntax "<foo\|bar>" for it to alternate between "foo" and "bar" (and any number of others) before looping back around to the first entry.  Currently not functional due to sampling issues, but the prompt alternating logic works.|
 
 ## Example Workflow
 Here's an example hi-res workflow using various WLSH nodes.
