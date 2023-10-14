@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-10-14
+
+- Added image preprocessing node to make images grayscale
+
 ## 2023-09-30
 
 - Added non-INFO variant of file IO nodes to quick-fix a compatibility issue that seems to crop up with the TTN suite

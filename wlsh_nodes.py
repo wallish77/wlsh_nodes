@@ -1626,6 +1626,26 @@ class WLSH_Save_Positive_Prompt_File:
                 f.write(content)
         except OSError:
             print(f'Error: Unable to save file `{file}`')
+# images
+
+class WLSH_Image_Grayscale:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "original": ("IMAGE",), }}
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("grayscale",)
+    FUNCTION = "make_grayscale"
+
+    CATEGORY = "WLSH Nodes/image"
+
+    def make_grayscale(self, original):
+        image = tensor2pil(original)
+        image = ImageOps.grayscale(image)
+        image = image.convert("RGB")
+        image = np.array(image).astype(np.float32) / 255.0
+        image = torch.from_numpy(image)[None,]
+        return (image,)
+
 
 class WLSH_Read_Prompt:
     @classmethod
@@ -1832,6 +1852,7 @@ NODE_CLASS_MAPPINGS = {
     "SDXL Quick Empty Latent (WLSH)" : WLSH_SDXL_Quick_Empty_Latent,
     #image
     "Image Load with Metadata (WLSH)": WLSH_Read_Prompt,
+    "Grayscale Image (WLSH)": WLSH_Image_Grayscale,
     #inpainting
     "Generate Border Mask (WLSH)": WLSH_Generate_Edge_Mask,
     "Outpaint to Image (WLSH)": WLSH_Outpaint_To_Image,
