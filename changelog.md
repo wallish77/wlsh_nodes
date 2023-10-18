@@ -1,5 +1,10 @@
 # Changelog
 
+## 2023-10-18
+
+- Added string combine node
+
+
 ## 2023-10-14
 
 - Added image preprocessing node to make images grayscale

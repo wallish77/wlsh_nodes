@@ -372,6 +372,39 @@ class WLSH_Simple_Pattern_Replace:
 
         return (new_string,)
 
+class WLSH_String_Append:
+    location = ["after","before"]  
+    separator = ["comma", "space", "newline", "none"]
+    
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "input_string": ("STRING", {"multiline": True, "forceInput": True}),
+                "addition": ("STRING", {"multiline": True}),
+                "placement": (s.location,),
+                "separator": (s.separator,),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("combined",)
+
+    FUNCTION = "concat_string"
+
+    CATEGORY = "WLSH Nodes/text"
+
+    def concat_string(self, input_string, addition, placement, separator):
+        sep = {"comma": ', ', "space": ' ', "newline": '\n', "none":''}
+        if (placement == "after"):
+            new_string = input_string + sep[separator] + addition
+        else:
+            new_string = addition + sep[separator] + input_string
+
+        return(new_string,)
 
 class WLSH_SDXL_Resolutions:
     resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
@@ -940,45 +973,6 @@ class WLSH_Generate_Edge_Mask:
         mask2 = np.array(mask2).astype(np.float32) / 255.0
         mask2 = torch.from_numpy(mask2)[None,]
         return (mask2,)
-
-# class WLSH_Generate_Face_Mask:
-#     detectors = ["opencv", "retinaface", "ssd", "mtcnn"]
-#     channels = ["red", "blue", "green"]
-#     @classmethod
-#     def INPUT_TYPES(s):
-#         return {"required": { "image": ("IMAGE",),
-#                              "detector": (s.detectors,),
-#                              "channel": (s.channels,),
-#                              "mask_padding": ("INT",{"default": 6, "min": 0, "max": 32, "step": 2}) 
-#                               }}
-#     RETURN_TYPES = ("IMAGE",)
-#     FUNCTION = "gen_face_mask"
-
-#     CATEGORY = "WLSH Nodes/inpainting"
-#     def gen_face_mask(self, image, mask_padding, detector, channel):
-#         image = tensor2pil(image)
-        
-#         faces = DeepFace.extract_faces(np.array(image),detector_backend=detector)
-#         # cv_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-#         # # Convert to grayscale
-#         # gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
-
-#         # # Detect faces in the image
-#         # face_cascade = cv2.CascadeClassifier('custom_nodes/haarcascade_frontalface_default.xml')
-#         # faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-#         mask = Image.new('RGB',image.size)
-
-#         # Draw a rectangle on the PIL Image object
-#         colors = {"red": "RGB(255,0,0)", "green": "RGB(0,255,0)", "blue": "RGB(0,0,255)"}
-#         draw = ImageDraw.Draw(mask)
-#         for face in faces:
-#             x,y,w,h = face['facial_area'].values()
-#             draw.rectangle((x-mask_padding,y-mask_padding,x+w+mask_padding,y+h+mask_padding), outline=colors[channel], fill=colors[channel])
-#         mask = mask.filter(ImageFilter.GaussianBlur(radius=6))
-
-#         mask = np.array(mask).astype(np.float32) / 255.0
-#         mask = torch.from_numpy(mask)[None,]
-#         return (mask,)
 
 # image I/O
 def get_timestamp(time_format="%Y-%m-%d-%H%M%S"):
@@ -1874,6 +1868,7 @@ NODE_CLASS_MAPPINGS = {
     "Build Filename String (WLSH)": WLSH_Build_Filename_String,
     "Time String (WLSH)": WLSH_Time_String,
     "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
+    "Simple String Combine (WLSH)": WLSH_String_Append,
     #IO
     "Image Save with Prompt (WLSH)": WLSH_Image_Save_With_Prompt,
     "Image Save with Prompt/Info (WLSH)": WLSH_Image_Save_With_Prompt_Info,

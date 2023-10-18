@@ -74,6 +74,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 |Build Filename String|Takes inputs similar to the Image Save node, used to build a filename which can be passed to multiple other nodes|
 |Time String|Returns a formatted string of the current time in the selected format.  Useful for filenames or debugging|
 |Simple Pattern Replace|Takes in an input string and a list string and does a simple find/replace and returns a new string.  Can choose a custom delimiter for the list string in case you want to use commas in the list.  If multiple entries of the pattern are in the input, each will get their own random entry.|
+|Simple String Combine|Takes in an input string lets you enter a second string to append (or prepend). Offers selection of separators.  Outputs combined string.|
 
 
 ## IO
