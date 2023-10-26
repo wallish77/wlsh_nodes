@@ -75,6 +75,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 |Time String|Returns a formatted string of the current time in the selected format.  Useful for filenames or debugging|
 |Simple Pattern Replace|Takes in an input string and a list string and does a simple find/replace and returns a new string.  Can choose a custom delimiter for the list string in case you want to use commas in the list.  If multiple entries of the pattern are in the input, each will get their own random entry.|
 |Simple String Combine|Takes in an input string lets you enter a second string to append (or prepend). Offers selection of separators.  Outputs combined string.|
+|Prompt Weight|Takes in an input string (ideally a prompt or string that will go into a prompt) and uses a multiplier to add weight to the incoming string.  e.g. "foo" and 1.25 -> "(foo:1.25)"|
 
 
 ## IO

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-10-25
+
+- Added Prompt Weight node
+
 ## 2023-10-18
 
 - Added string combine node

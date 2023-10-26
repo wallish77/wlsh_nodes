@@ -406,6 +406,34 @@ class WLSH_String_Append:
 
         return(new_string,)
 
+class WLSH_Prompt_Weight: 
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True, "forceInput": True}),
+                "weight": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 5.0, "step": 0.1}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("prompt",)
+
+    FUNCTION = "add_weight"
+
+    CATEGORY = "WLSH Nodes/text"
+
+    def add_weight(self, prompt, weight):
+        if(weight == 1.0):
+            new_string = prompt
+        else:
+            new_string = "(" + prompt +  ":" + str(weight) + ")"
+
+        return(new_string,)
+
 class WLSH_SDXL_Resolutions:
     resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
     direction = ["landscape","portrait"]    
@@ -1869,6 +1897,7 @@ NODE_CLASS_MAPPINGS = {
     "Time String (WLSH)": WLSH_Time_String,
     "Simple Pattern Replace (WLSH)": WLSH_Simple_Pattern_Replace,
     "Simple String Combine (WLSH)": WLSH_String_Append,
+    "Prompt Weight (WLSH)": WLSH_Prompt_Weight,
     #IO
     "Image Save with Prompt (WLSH)": WLSH_Image_Save_With_Prompt,
     "Image Save with Prompt/Info (WLSH)": WLSH_Image_Save_With_Prompt_Info,
