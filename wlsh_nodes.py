@@ -383,10 +383,12 @@ class WLSH_String_Append:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "input_string": ("STRING", {"multiline": True, "forceInput": True}),
                 "addition": ("STRING", {"multiline": True}),
                 "placement": (s.location,),
                 "separator": (s.separator,),
+            },
+            "optional": {
+                "input_string": ("STRING", {"multiline": True, "forceInput": True}),
             },
         }
 
@@ -397,8 +399,12 @@ class WLSH_String_Append:
 
     CATEGORY = "WLSH Nodes/text"
 
-    def concat_string(self, input_string, addition, placement, separator):
+    def concat_string(self,placement, separator, addition="",  input_string=""):
         sep = {"comma": ', ', "space": ' ', "newline": '\n', "none":''}
+
+        if (input_string is None):
+            return(addition,)
+
         if (placement == "after"):
             new_string = input_string + sep[separator] + addition
         else:
