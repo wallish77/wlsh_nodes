@@ -3,6 +3,7 @@
 ## 2023-10-25
 
 - Added Prompt Weight node
+- Added SDXL workflow
 
 ## 2023-10-18
 

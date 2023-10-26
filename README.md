@@ -94,7 +94,12 @@ Various nodes for file saving.  Most of these come with an "info" variant that r
 |-----------|-------------|
 |Alternating KSampler| Work in progress.  Attempting to recreate the alternating prompts of Auto1111.  Provide a prompt with the syntax "<foo\|bar>" for it to alternate between "foo" and "bar" (and any number of others) before looping back around to the first entry.  Currently not functional due to sampling issues, but the prompt alternating logic works.|
 
-## Example Workflow
+## Example Workflows
 Here's an example hi-res workflow using various WLSH nodes.
+| Workflow | Image |
+|----------|-------|
+| Hi-res SD 1.5 Workflow| ![hi-res](./img/hires-workflow-example.png) |
+| Simple SDXL Workflow | ![sdxl](./img/sdxl-basic-example.png) |
+| IP-Adapter Workflow w/Prompt Feed| ![ip-adapt](./img/ip-adapter-example.png) |
 
-![hi-res](./img/hires-workflow-example.png)
+
