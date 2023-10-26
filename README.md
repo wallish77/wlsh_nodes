@@ -98,8 +98,8 @@ Various nodes for file saving.  Most of these come with an "info" variant that r
 Here's an example hi-res workflow using various WLSH nodes.
 | Workflow | Image |
 |----------|-------|
-| Hi-res SD 1.5 Workflow| ![hi-res](./img/hires-workflow-example.png) |
-| Simple SDXL Workflow | ![sdxl](./img/sdxl-basic-example.png) |
-| IP-Adapter Workflow w/Prompt Feed| ![ip-adapt](./img/ip-adapter-example.png) |
+| Hi-res SD 1.5 Workflow| ![hi-res](./img/hires-workflow-example.png){width=256 height=256} |
+| Simple SDXL Workflow | ![sdxl](./img/sdxl-basic-example.png){width=256 height=256} |
+| IP-Adapter Workflow w/Prompt Feed| ![ip-adapt](./img/ip-adapter-example.png){width=256 height=256} |
 
 
