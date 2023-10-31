@@ -764,6 +764,64 @@ class WLSH_CLIP_Positive_Negative_XL:
         condN, pooledN = clip.encode_from_tokens(tokensN, return_pooled=True)
         return ([[condP, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]],[[condN, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]], )
 
+class WLSH_CLIP_Text_Unified:
+    conditioners = ["SD1.5", "SDXL"]
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {
+            "positive": ("STRING", {"multiline": True, "default": ""}),
+            "negative": ("STRING", {"multiline": True, "default": ""}), 
+            "clip": ("CLIP", ),
+            "conditioner": (s.conditioners,),
+            },
+            "optional": {
+                "width": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+                "height": ("INT", {"default": 1024.0, "min": 0, "max": MAX_RESOLUTION}),
+            }}
+
+    RETURN_TYPES = ("CONDITIONING","CONDITIONING","STRING","STRING")
+    RETURN_NAMES = ("positive", "negative", "positive_text", "negative_text")
+    FUNCTION = "encode"
+
+    CATEGORY = "WLSH Nodes/conditioning"
+
+    def encode(self, clip, positive, negative, conditioner, width=1024, height=1024, ):
+        if(conditioner == "SDXL"):
+            # double height for target
+            target_width = 2*width
+            target_height = 2*height
+
+            # no crop
+            crop_w = 0
+            crop_h = 0 
+
+            # duplicate pos_g as pos_l
+            tokens = clip.tokenize(positive)
+            tokens["l"] = clip.tokenize(positive)["l"]
+            if len(tokens["l"]) != len(tokens["g"]):
+                empty = clip.tokenize("")
+                while len(tokens["l"]) < len(tokens["g"]):
+                    tokens["l"] += empty["l"]
+                while len(tokens["l"]) > len(tokens["g"]):
+                    tokens["g"] += empty["g"]
+            condP, pooledP = clip.encode_from_tokens(tokens, return_pooled=True)
+
+            # duplicate neg_g as neg_l
+            tokensN = clip.tokenize(negative)
+            tokensN["l"] = clip.tokenize(negative)["l"]
+            if len(tokensN["l"]) != len(tokensN["g"]):
+                empty = clip.tokenize("")
+                while len(tokensN["l"]) < len(tokensN["g"]):
+                    tokensN["l"] += empty["l"]
+                while len(tokensN["l"]) > len(tokensN["g"]):
+                    tokensN["g"] += empty["g"]
+            condN, pooledN = clip.encode_from_tokens(tokensN, return_pooled=True)
+            
+            positive_text = positive
+            negative_text = negative
+            return ([[condP, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]],[[condN, {"pooled_output": pooledP, "width": width, "height": height, "crop_w": crop_w, "crop_h": crop_h, "target_width": target_width, "target_height": target_height}]], positive_text, negative_text, )
+        elif(conditioner == "SD1.5"):
+            return ([[clip.encode(positive), {}]],[[clip.encode(negative), {}]],positive,negative) 
 
 # upscaling
 class WLSH_Image_Scale_By_Factor:
@@ -1874,6 +1932,7 @@ NODE_CLASS_MAPPINGS = {
     "CLIP Positive-Negative w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative,
     "CLIP Positive-Negative XL (WLSH)": WLSH_CLIP_Positive_Negative_XL,
     "CLIP Positive-Negative XL w/Text (WLSH)": WLSH_CLIP_Text_Positive_Negative_XL,
+    "CLIP +/- w/Text Unified (WLSH)": WLSH_CLIP_Text_Unified,
     #latent
     "Empty Latent by Pixels (WLSH)": WLSH_Empty_Latent_Image_By_Pixels,
     "Empty Latent by Ratio (WLSH)" : WLSH_Empty_Latent_Image_By_Ratio,

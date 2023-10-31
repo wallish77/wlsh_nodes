@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-10-30
+
+- Added unified SD1.5/SDXL CLIP-Text Node
+
 ## 2023-10-25
 
 - Added Prompt Weight node

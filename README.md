@@ -21,6 +21,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 |-----------|-------------|
 |CLIP Positive-Negative| Simple CLIP box containing positive and negative prompt boxes.  Mostly a space saver.  Also available as an SDXL version.|
 |CLIP Postive-Negative w/Text| Same as the above, but with two output ndoes to provide the positive and negative inputs to other nodes.  Also available as an SDXL version|
+|CLIP +/- w/Text Unified (WLSH)| Combined prompt/conditioning that lets you toggle between SD1.5 and SDXL (just make sure to change your inputs).  Sacrifices some features of SDXL, namely by assuming POS_G and POS_L are the same (as well as the negative), assuming zero crop, and assuming target size is 2x input size.  Width and height inputs are option, will assume 1024x1024.|
 
 ## Latent
 
