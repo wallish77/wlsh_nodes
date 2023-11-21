@@ -53,6 +53,7 @@ A set of custom nodes for ComfyUI created for personal use to solve minor annoya
 | Node Name | Description |
 |-----------|-------------|
 |Image Scale by Factor|Scale an image by a predefined factor without a model|
+|Image Scale by Shortside| Scale an image by specifying what the shorter side of the image should become.  The resulting image should be approximately the same aspect ratio as the original, just scaled down (or up) to a target scale.|
 |SDXL Quick Image Scale|Take an input image and do a quick simple scale (or scale & crop) to one of the ideal SDXL resolutions|
 |Upscale by Factor with Model|Does what it says on the tin.  Scales using an upscale model, but lets you define the multiplier factor rather than take from the model.|
 

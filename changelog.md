@@ -1,8 +1,12 @@
 # Changelog
 
+## 2023-11-20
+
+- Added Image Scale by Shortside node
+
 ## 2023-10-30
 
-- Added unified SD1.5/SDXL CLIP-Text Node
+- Added unified SD1.5/SDXL CLIP-Text node
 
 ## 2023-10-25
 

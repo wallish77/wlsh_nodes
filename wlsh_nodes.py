@@ -849,6 +849,32 @@ class WLSH_Image_Scale_By_Factor:
         s = s.movedim(1,-1)
         return (s,)
 
+class WLSH_Image_Scale_By_Shortside:
+    upscale_methods = ["nearest-exact", "bilinear", "area"]
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { "original": ("IMAGE",),
+                              "upscale_method": (s.upscale_methods,),
+                              "shortside": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 128})
+                              }}
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "upscale"
+
+    CATEGORY = "WLSH Nodes/upscaling"
+
+    def upscale(self, original, upscale_method, shortside):
+        old_width = original.shape[2]
+        old_height = original.shape[1]
+        old_shortside = min(old_width, old_height)
+        factor = shortside/max(1,old_shortside)
+        new_width= int(old_width * factor)
+        new_height = int(old_height * factor)
+        print("Processing image with shape: ",old_width,"x",old_height,"to ",new_width,"x",new_height)
+        samples = original.movedim(-1,1)
+        s = comfy.utils.common_upscale(samples, new_width, new_height, upscale_method, crop="disabled")
+        s = s.movedim(1,-1)
+        return (s,)
 
 class WLSH_SDXL_Quick_Image_Scale:
     upscale_methods = ["nearest-exact", "bilinear", "area"]
@@ -1947,6 +1973,7 @@ NODE_CLASS_MAPPINGS = {
     "VAE Encode for Inpaint w/Padding (WLSH)": WLSH_VAE_Encode_For_Inpaint_Padding,
     #upscaling
     "Image Scale By Factor (WLSH)": WLSH_Image_Scale_By_Factor,
+    "Image Scale by Shortside (WLSH)": WLSH_Image_Scale_By_Shortside,
     "SDXL Quick Image Scale (WLSH)": WLSH_SDXL_Quick_Image_Scale,
     "Upscale by Factor with Model (WLSH)": WLSH_Upscale_By_Factor_With_Model,
     #numbers
