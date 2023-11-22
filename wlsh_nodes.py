@@ -515,7 +515,7 @@ class WLSH_Empty_Latent_Image_By_Resolution:
         adj_width = width // 8
         adj_height = height // 8
         latent = torch.zeros([batch_size, 4, adj_height, adj_width])
-        return ({"samples":latent}, adj_width,adj_height, )
+        return ({"samples":latent}, adj_width * 8, adj_height * 8, )
 
 # latent
 class WLSH_Empty_Latent_Image_By_Ratio:
@@ -550,7 +550,7 @@ class WLSH_Empty_Latent_Image_By_Ratio:
         adj_width = width // 8
         adj_height = height // 8
         latent = torch.zeros([batch_size, 4, adj_height, adj_width])
-        return ({"samples":latent}, adj_width,adj_height, )
+        return ({"samples":latent}, adj_width * 8, adj_height * 8, )
 
 class WLSH_Empty_Latent_Image_By_Pixels:
     aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
@@ -588,7 +588,7 @@ class WLSH_Empty_Latent_Image_By_Pixels:
         adj_width = width // 8
         adj_height = height // 8
         latent = torch.zeros([batch_size, 4, adj_height, adj_width])
-        return ({"samples":latent}, adj_width, adj_height, )
+        return ({"samples":latent}, adj_width * 8, adj_height * 8, )
 
 
 class WLSH_SDXL_Quick_Empty_Latent:
@@ -618,7 +618,7 @@ class WLSH_SDXL_Quick_Empty_Latent:
         adj_width = width // 8
         adj_height = height // 8
         latent = torch.zeros([batch_size, 4, adj_height, adj_width])
-        return ({"samples":latent}, adj_width, adj_height,)
+        return ({"samples":latent}, adj_width * 8, adj_height * 8,)
 
 class WLSH_SDXL_Resolution_Multiplier:
     def __init__(self, device="cpu"):
@@ -856,7 +856,7 @@ class WLSH_Image_Scale_By_Shortside:
     def INPUT_TYPES(s):
         return {"required": { "original": ("IMAGE",),
                               "upscale_method": (s.upscale_methods,),
-                              "shortside": ("INT", {"default": 512, "min": 64, "max": 4096, "step": 128})
+                              "shortside": ("INT", {"default": 512, "min": 32, "max": 4096, "step": 32})
                               }}
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "upscale"

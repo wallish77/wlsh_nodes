@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-11-21
+
+- Fixed issue with integer width/height return from quick latent nodes.
+
 ## 2023-11-20
 
 - Added Image Scale by Shortside node
