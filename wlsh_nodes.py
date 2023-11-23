@@ -1197,7 +1197,7 @@ class WLSH_Image_Save_With_Prompt:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
                 
-        paths = self.save_images(images, output_path,path, filename,comment, extension, quality, prompt, extra_pnginfo)
+        paths = self.save_images(images, output_path, path, filename,comment, extension, quality, prompt, extra_pnginfo)
         
         return { "ui": { "images": paths } }
 
@@ -1299,7 +1299,7 @@ class WLSH_Image_Save_With_Prompt_Info:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
                 
-        paths = self.save_images(images, output_path,path, filename,comment, extension, quality, prompt, extra_pnginfo)
+        paths = self.save_images(images, output_path, path, filename,comment, extension, quality, prompt, extra_pnginfo)
         
         return { "ui": { "images": paths } }
 
@@ -1399,7 +1399,7 @@ class WLSH_Image_Save_With_File_Info:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
                 
-        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
+        paths = self.save_images(images, output_path, path, filename, comment, extension, quality, prompt, extra_pnginfo)
         self.save_text_file(filename,path, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }
@@ -1512,7 +1512,7 @@ class WLSH_Image_Save_With_File:
                 print(f'The path `{output_path.strip()}` specified doesn\'t exist! Creating directory.')
                 os.makedirs(output_path, exist_ok=True)    
                 
-        paths = self.save_images(images, output_path,filename,comment, extension, quality, prompt, extra_pnginfo)
+        paths = self.save_images(images, output_path, path, filename, comment, extension, quality, prompt, extra_pnginfo)
         self.save_text_file(filename,path, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }

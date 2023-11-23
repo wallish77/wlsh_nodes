@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-11-22
+
+- Fixed issue with Image Save with Prompt/Info & File node
+
 ## 2023-11-21
 
 - Fixed issue with integer width/height return from quick latent nodes.
