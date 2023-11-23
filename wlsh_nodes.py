@@ -1400,7 +1400,7 @@ class WLSH_Image_Save_With_File_Info:
                 os.makedirs(output_path, exist_ok=True)    
                 
         paths = self.save_images(images, output_path, path, filename, comment, extension, quality, prompt, extra_pnginfo)
-        self.save_text_file(filename,path, output_path, comment, seed, modelname)
+        self.save_text_file(filename, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }
 
@@ -1513,7 +1513,7 @@ class WLSH_Image_Save_With_File:
                 os.makedirs(output_path, exist_ok=True)    
                 
         paths = self.save_images(images, output_path, path, filename, comment, extension, quality, prompt, extra_pnginfo)
-        self.save_text_file(filename,path, output_path, comment, seed, modelname)
+        self.save_text_file(filename, output_path, comment, seed, modelname)
         #return
         return { "ui": { "images": paths } }
 
