@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-11-24
+
+- Added width and height to outputs of Image Scale by Shortside
+
 ## 2023-11-22
 
 - Fixed issue with Image Save with Prompt/Info & File node

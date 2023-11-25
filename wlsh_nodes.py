@@ -858,7 +858,8 @@ class WLSH_Image_Scale_By_Shortside:
                               "upscale_method": (s.upscale_methods,),
                               "shortside": ("INT", {"default": 512, "min": 32, "max": 4096, "step": 32})
                               }}
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE","INT","INT",)
+    RETURN_NAMES = ("IMAGE", "width", "height",)
     FUNCTION = "upscale"
 
     CATEGORY = "WLSH Nodes/upscaling"
@@ -874,7 +875,7 @@ class WLSH_Image_Scale_By_Shortside:
         samples = original.movedim(-1,1)
         s = comfy.utils.common_upscale(samples, new_width, new_height, upscale_method, crop="disabled")
         s = s.movedim(1,-1)
-        return (s,)
+        return (s,new_width,new_height,)
 
 class WLSH_SDXL_Quick_Image_Scale:
     upscale_methods = ["nearest-exact", "bilinear", "area"]
