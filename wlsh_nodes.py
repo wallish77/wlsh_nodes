@@ -230,7 +230,7 @@ class WLSH_SDXL_Steps:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "precondition": ("INT", {"default": 3, "min": 1, "max": 10000}),
+                "precondition": ("INT", {"default": 3, "min": 0, "max": 10000}),
                 "base": ("INT", {"default": 12, "min": 1, "max": 10000}),
                 "total": ("INT", {"default": 20, "min": 1, "max": 10000}),
             }
