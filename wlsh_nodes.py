@@ -1,6 +1,6 @@
 import os
 
-import model_management
+from comfy import model_management
 import torch
 import comfy.sd
 import comfy.utils
@@ -471,7 +471,7 @@ class WLSH_SDXL_Resolutions:
         return(width,height)
 
 class WLSH_Resolutions_by_Ratio:
-    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","21:9","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
     
     @classmethod
@@ -519,7 +519,7 @@ class WLSH_Empty_Latent_Image_By_Resolution:
 
 # latent
 class WLSH_Empty_Latent_Image_By_Ratio:
-    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
 
     def __init__(self, device="cpu"):

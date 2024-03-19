@@ -1,5 +1,13 @@
 # Changelog
 
+## 2024-03-19
+
+- Fixed imports based on changes in comfy
+
+## 2023-12-31
+
+- Added additional resolution to ratio-based nodes.
+
 ## 2023-11-24
 
 - Added width and height to outputs of Image Scale by Shortside
