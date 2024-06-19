@@ -1,5 +1,10 @@
 # Changelog
 
+## 2024-06-19
+
+- Added resolution aspect ratios to SDXL quick latent/quick resolution nodes
+- Added fallback comment for empty prompt info when writing image info (to prevent the question of if it was a failed write or if there was just no prompt ever)
+
 ## 2024-03-19
 
 - Fixed imports based on changes in comfy

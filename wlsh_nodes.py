@@ -441,7 +441,7 @@ class WLSH_Prompt_Weight:
         return(new_string,)
 
 class WLSH_SDXL_Resolutions:
-    resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
+    resolution = ["1024x1024|1:1","1152x896|9:7","1216x832|19:13","1344x768|7:4","1536x640|12:5"]
     direction = ["landscape","portrait"]    
     
     def __init__(self):
@@ -463,7 +463,8 @@ class WLSH_SDXL_Resolutions:
 
 
     def get_resolutions(self,resolution, direction):
-        width,height = resolution.split('x')
+        pixels = resolution.split('|')[0]
+        width,height = pixels.split('x')
         width = int(width)
         height = int(height)
         if(direction == "portrait"):
@@ -471,7 +472,7 @@ class WLSH_SDXL_Resolutions:
         return(width,height)
 
 class WLSH_Resolutions_by_Ratio:
-    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","21:9","43:18","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
     
     @classmethod
@@ -519,7 +520,7 @@ class WLSH_Empty_Latent_Image_By_Resolution:
 
 # latent
 class WLSH_Empty_Latent_Image_By_Ratio:
-    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","6:5","5:4","4:3","3:2","16:10","16:9","19:9","21:9","43:18","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
 
     def __init__(self, device="cpu"):
@@ -553,7 +554,7 @@ class WLSH_Empty_Latent_Image_By_Ratio:
         return ({"samples":latent}, adj_width * 8, adj_height * 8, )
 
 class WLSH_Empty_Latent_Image_By_Pixels:
-    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","2:1","3:1","4:1"]
+    aspects = ["1:1","5:4","4:3","3:2","16:10","16:9","19:9","21:9","43:18","2:1","3:1","4:1"]
     direction = ["landscape","portrait"]
 
     def __init__(self, device="cpu"):
@@ -592,7 +593,7 @@ class WLSH_Empty_Latent_Image_By_Pixels:
 
 
 class WLSH_SDXL_Quick_Empty_Latent:
-    resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
+    resolution = ["1024x1024|1:1","1152x896|9:7","1216x832|19:13","1344x768|7:4","1536x640|12:5"]
     direction = ["landscape","portrait"]
 
     def __init__(self, device="cpu"):
@@ -610,7 +611,8 @@ class WLSH_SDXL_Quick_Empty_Latent:
     CATEGORY = "WLSH Nodes/latent"
 
     def generate(self, resolution, direction, batch_size=1):
-        width,height = resolution.split('x')
+        pixels = resolution.split('|')[0]
+        width,height = pixels.split('x')
         width = int(width)
         height = int(height)
         if(direction == "portrait"):
@@ -879,7 +881,7 @@ class WLSH_Image_Scale_By_Shortside:
 
 class WLSH_SDXL_Quick_Image_Scale:
     upscale_methods = ["nearest-exact", "bilinear", "area"]
-    resolution = ["1024x1024","1152x896","1216x832","1344x768","1536x640"]
+    resolution = ["1024x1024|1:1","1152x896|9:7","1216x832|19:13","1344x768|7:4","1536x640|12:5"]
     direction = ["landscape","portrait"]
     crop_methods = ["disabled", "center"]
     @classmethod
@@ -896,7 +898,8 @@ class WLSH_SDXL_Quick_Image_Scale:
     CATEGORY = "WLSH Nodes/upscaling"
 
     def upscale(self, original, upscale_method, resolution, direction, crop):
-        width,height = resolution.split('x')
+        pixels = resolution.split('|')[0]
+        width,height = pixels.split('x')
         new_width = int(width)
         new_height = int(height)
         if(direction == "portrait"):
@@ -1124,7 +1127,7 @@ def make_filename(filename="ComfyUI", seed={"seed":0}, modelname="sd", counter=0
         filename = timestamp
     return(filename)  
 
-def make_comment(positive, negative, modelname="unknown", seed=-1, info=None):
+def make_comment(positive="no positive prompt info", negative="no negative prompt info", modelname="unknown", seed=-1, info=None):
     comment = ""
     if(info is None):
         comment = "Positive prompt:\n" + positive + "\nNegative prompt:\n" + negative + "\nModel: " + modelname + "\nSeed: " + str(seed)
