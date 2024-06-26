@@ -1,0 +1,15 @@
+[project]
+name = "wlsh_nodes"
+description = "Nodes: Checkpoint Loader with Name, Save Prompt Info, Outpaint to Image, CLIP Positive-Negative, SDXL Quick Empty Latent, Empty Latent by Ratio, Time String, SDXL Steps, SDXL Resolutions ..."
+version = "1.0.0"
+license = "LICENSE"
+dependencies = ["piexif"]
+
+[project.urls]
+Repository = "https://github.com/wallish77/wlsh_nodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "wlsh_nodes"
+Icon = ""
